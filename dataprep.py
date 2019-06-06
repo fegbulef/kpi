@@ -16,6 +16,7 @@ import sys
 import config   # user defined module
 
 try:
+    import xlrd
     import pandas as pd
     import numpy as np
 
@@ -437,3 +438,37 @@ def group_counts_by_fyq(df_plot_data, mttr_calcs):
     
     #print("\nFYQ group:\n", df_product_by_fyq)
     return df_product_by_fyq
+
+
+#------------------------------------------------------------
+# Process ATC data ready for plotting
+# - returns DataFrame structure 
+#------------------------------------------------------------
+def get_atc_plot_data(df, toolcfg):
+
+    # get schedule date from description
+    rundate = pd.to_datetime(df.description.str.split('_').str[1], format="%Y-%m-%d", errors='ignore')
+    rundate.dropna(inplace=True)        # ignore null rows
+    df = df.assign(rundate=rundate) 
+   
+    # filter data by rundate
+    end_dt = date.today()
+    mth_filter = config.autokpi["months_to_plot"]
+    start_dt = get_next_date(datetime(end_dt.year, end_dt.month, 1), mth_filter, 0)
+
+    end_dt = pd.to_datetime(end_dt, format="%Y-%m-%d")          # put dates in right format to 
+    start_dt = pd.to_datetime(start_dt, format="%Y-%m-%d")      # compare with dataframe dates
+    
+    df_atc = filter_df_by_date(df, toolcfg, start_dt, end_dt)
+
+    # setup columns for plot
+    rundate_int = rundate.apply(lambda x: xlrd.xldate.xldate_from_date_tuple((x.year, x.month, x.day), 0))
+    df_atc_plot = df_atc.assign(rundate_int=rundate_int)
+
+    df_atc_plot["totalfailed"] = df_atc_plot.failed + df_atc_plot.incomplete
+    df_atc_plot["%passed"] = (df_atc_plot.passed / df_atc_plot.jobs_count)*100
+    df_atc_plot["%failed"] = (df_atc_plot.totalfailed / df_atc_plot.jobs_count)*100
+
+    print("\nATC Plot data\n:", df_atc_plot.info())
+    return df_atc_plot
+            

@@ -99,14 +99,47 @@ def sum_df_columns(df_sum, df_add, columnlist):
     return df_sum
 
 
+#------------------------------------------------------------
+# Import ATC data by schedule and plot charts
+# - returns None 
+#------------------------------------------------------------
+def process_atc_schedules(toolcfg, tool, kpi):
+
+    for sched_nm, sched_id in toolcfg["schedules"].items():
+        print("\n...processing ATC schedules for", sched_nm)
+        
+        import_df = importdata.import_from_api(toolcfg, tool, kpi, sched_id)
+
+        if import_df is None:
+            print("\nWARNING - Could not import data for {0} - {1}".format(kpi, sched_nm))
+            continue
+
+        if len(import_df) < 7:      # ?? less than a weeks data ??
+            print("\nWARNING - Insufficient data to plot {} - {}".format(kpi, sched_nm))
+            continue
+        
+        # get plot data
+        df_atc_plot = dataprep.get_atc_plot_data(import_df, toolcfg)
+        df_atc_plot.sort_values('rundate_int', ascending=True, inplace=True)
+
+        # plot charts
+        for chart_key, chart_title in toolcfg["kpi"][kpi]["kpi_title"].items():
+
+            chart_title = chart_title.replace('XXX', sched_nm)
+            kpi_chart = plotkpi.plot_atc_chart(df_atc_plot, sched_nm, chart_title, chart_key)
+
+            if kpi_chart: print("\nATC chart created for {0} {1}".format(sched_nm, chart_key))
+
+
+    return None
+
+
 
 #---------------#
 #   M A I N     #
 #---------------#
 
-def main(kpi_dict, importfromxl):
-
-    #if kpi_dict: clear_output_dir()      
+def main(kpi_dict, importfromxl):      
     
     print("\nInput Parms:", kpi_dict)
     clear_kpi_output()
@@ -132,18 +165,22 @@ def main(kpi_dict, importfromxl):
 
         for kpi in kpis:
             print("\nSelected -", kpi)
-
             plot_fyq = True
-            if kpi == 'PSIRT': plot_fyq = False
-            
-            if importfromxl:    # import data from (saved) excel workbook
+
+            if kpi == 'ATC':
+                process_atc_schedules(toolcfg, tool, kpi)
+                continue
+
+            if importfromxl:        # import data from (saved) excel workbook
                 import_df = importdata.import_from_excel(toolcfg, tool, kpi)
-            else:               # import data using tool api (??)
+            else:                   # import data using tool api
                 import_df = importdata.import_from_api(toolcfg, tool, kpi)
 
             if import_df is None:
                 print("\nWARNING - Could not import data for {0}: {1}".format(tool, kpi))
                 continue
+
+            if kpi == 'PSIRT': plot_fyq = False
 
             # reformat dates
             df_reformat = dataprep.reformat_df_dates(import_df, toolcfg, importfromxl)

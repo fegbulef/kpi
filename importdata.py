@@ -19,10 +19,12 @@ import json
 import requests
 import warnings
 
+import config   # user defined module
+
 from jira import JIRA
 from jira.exceptions import JIRAError
 
-import config   # user defined module
+from datetime import datetime
 
 try:
     import pandas as pd
@@ -38,7 +40,7 @@ except ImportError:
 # - returns list of column names 
 #------------------------------------------------------------
 def get_column_names(toolcfg):
-    
+
     id_col = toolcfg["id_column"]
     status_col = toolcfg["status_column"]
     priority_col = toolcfg["priority_column"]
@@ -75,11 +77,14 @@ def get_config_filename(tool, kpi):
 # Setup data structure for loading API data
 # - returns dictionary
 #-------------------------------------------------------------
-def get_api_data_structure(toolcfg):
+def get_api_data_structure(toolcfg, kpi=None):
 
     api_data = {}
-    
-    columns = get_column_names(toolcfg)
+
+    if kpi == 'ATC':
+        columns = toolcfg["columns"]
+    else:
+        columns = get_column_names(toolcfg)
     
     for c in columns:
         api_data[c] = []
@@ -146,7 +151,7 @@ def import_from_excel(toolcfg, tool, kpi):
             import_df = xldf[columns]
             
     except Exception as e:
-        print("ERROR - {}".format(str(e)))
+        print("\nERROR - {}".format(str(e)))
 
 
     print("\nImported DF:\n", import_df.head())
@@ -167,11 +172,11 @@ def get_jira_client(toolcfg, user, pwd, kpi):
     try:
         jra = JIRA(options=option, auth=(user, pwd))
         if not jra:
-            print("ERROR - JIRA API Unsuccessful for", kpi)
+            print("\nERROR - JIRA API Unsuccessful for", kpi)
             return None
             
     except JIRAError as e:
-        print("JIRA API ERROR - {}".format(api_status_code_desc(e.status_code)))
+        print("\nJIRA API ERROR - {}".format(api_status_code_desc(e.status_code)))
 
     print("\nJIRA Connection Status: OK\n")
     return jra
@@ -227,7 +232,7 @@ def get_jira_issues(jra, toolcfg, kpi):
                     api_data[closed_col].append(None)
                 
         except Exception as e:
-            print("JIRA ERROR - {}".format(str(e)))
+            print("\nJIRA ERROR - {}".format(str(e)))
 
     api_df = pd.DataFrame(api_data)
 
@@ -238,7 +243,7 @@ def get_jira_issues(jra, toolcfg, kpi):
 # Build url from config
 # - returns string
 #-------------------------------------------------------------
-def get_url(toolcfg, kpi):
+def get_url(toolcfg, kpi, parms=None):
     
     query = ""
     fields = ""
@@ -248,13 +253,19 @@ def get_url(toolcfg, kpi):
     
     if "query" in toolcfg["kpi"][kpi]:
         query = toolcfg["kpi"][kpi]["query"].replace(' ', '%20')
+        
+        if kpi == 'ATC':
+            query = query.replace('XXX', parms)
+
+            
     if "type" in toolcfg["kpi"][kpi]:
         return_type = toolcfg["kpi"][kpi]["type"].replace('XXX', 'json')
+        
     if "fields" in toolcfg["kpi"][kpi]:
         fields = toolcfg["kpi"][kpi]["fields"]
 
     url = str.join('',[webservice, query, return_type, fields])
-    #print("URL:\n", url)
+    print("\nURL:", url)
     
     return url
 
@@ -263,7 +274,7 @@ def get_url(toolcfg, kpi):
 # Connect to webservice 
 # - returns json 
 #-------------------------------------------------------------
-def get_qddts_results(toolcfg, kpi):
+def get_qddts_data(toolcfg, kpi):
     
     url = get_url(toolcfg, kpi)    
 
@@ -272,11 +283,11 @@ def get_qddts_results(toolcfg, kpi):
         
         if not req.status_code == requests.codes.ok:
             req_msg = api_status_code_desc(req)
-            print("QDDTS Webservice ERROR - {}".format(req_msg))
+            print("\nQDDTS Webservice ERROR - {}".format(req_msg))
             return None
         
     except Exception as e:
-        print("QDDTS Webservice ERROR - {}".format(str(e)))
+        print("\nQDDTS Webservice ERROR - {}".format(str(e)))
 
     print("\nQDDTS Connection: OK\n")
     return req.json()
@@ -286,7 +297,7 @@ def get_qddts_results(toolcfg, kpi):
 # Import Webserver results
 # - returns Dataframe structure
 #-------------------------------------------------------------
-def import_qddts_results(qddts_json, toolcfg):
+def process_qddts_results(qddts_json, toolcfg):
 
     api_data = get_api_data_structure(toolcfg)
 
@@ -317,24 +328,57 @@ def import_qddts_results(qddts_json, toolcfg):
 
 
 #-------------------------------------------------------------
+# Process ACANO schedules
+# - returns DataFrame structure 
+#-------------------------------------------------------------
+def import_acano_schedule(toolcfg, acano_json):
+
+    curr_dt = datetime.today()
+    
+    api_data = get_api_data_structure(toolcfg, 'ATC')
+   
+    for idx in range(len(acano_json)):
+
+        # exclude data where 'No Result' is zero
+        if acano_json[idx]["noresult"] == 0:            
+            continue
+
+        # only retrieve up to 2yrs worth of data
+        tmstp = acano_json[idx]["timestamp"]
+        if tmstp:
+            if (curr_dt.year - int(tmstp[:4])) > 2:      
+                break
+
+        for column, data in acano_json[idx].items():
+            if column in api_data:
+                api_data[column].append(data)
+
+
+    # create dataframe          
+    api_df = pd.DataFrame(api_data)
+
+    return api_df
+
+
+#-------------------------------------------------------------
 # Connect to ACANO 
 # - returns json object 
 #-------------------------------------------------------------
-def get_acano_results(toolcfg, user, pwd, kpi):
+def get_acano_schedule(toolcfg, user, pwd, kpi, parms):
 
     req = None
-    url = get_url(toolcfg, kpi)
+    url = get_url(toolcfg, kpi, parms)
     
     try:
         req = requests.get(url, auth=(user, pwd))
 
         if not req.status_code == requests.codes.ok:
             req_msg = api_status_code_desc(req)
-            print("ACANO API ERROR - {}".format(req_msg))
+            print("\nACANO API ERROR - {}".format(req_msg))
             return None
             
     except Exception as e:
-        print("ACANO API ERROR - {}".format(api_status_code_desc(e.status_code)))
+        print("\nACANO API ERROR - {}".format(api_status_code_desc(e.status_code)))
 
     print("\nACANO Connection Status: OK\n")
     return req.json()
@@ -344,7 +388,7 @@ def get_acano_results(toolcfg, user, pwd, kpi):
 # Import raw data using API for given tool 
 # - returns DataFrame structure 
 #-------------------------------------------------------------
-def import_from_api(toolcfg, tool, kpi):
+def import_from_api(toolcfg, tool, kpi, parms=None):
 
     import_df = None
 
@@ -357,26 +401,26 @@ def import_from_api(toolcfg, tool, kpi):
             import_df = get_jira_issues(jra, toolcfg, kpi)
         
     elif tool == 'CDETS':
-        qddts_json = get_qddts_results(toolcfg, kpi)
+        qddts_json = get_qddts_data(toolcfg, kpi)
         if qddts_json:
-            import_df = import_qddts_results(qddts_json, toolcfg)
+            import_df = process_qddts_results(qddts_json, toolcfg)
 
     elif tool == 'ACANO':
+        if not parms:
+            print("ACANO API ERROR - No schedule available to retrieve data")
+        
         user = toolcfg["user"]
         pwd = toolcfg["password"]
-        acano_json = get_acano_results(toolcfg, user, pwd, kpi)
+        
+        acano_json = get_acano_schedule(toolcfg, user, pwd, kpi, parms)
         if acano_json:
-            print(acano_json)
-            return None
-            #import_df = import_qddts_results(qddts_json, toolcfg)
+            import_df = import_acano_schedule(toolcfg, acano_json)
 
-    else:
-        return None
 
     #savecsv = str.join('',[kpi, '_raw.csv'])
     #import_df.to_csv(savecsv, sep=',')
 
-    print("\nImport success:\n", import_df.info())
+    if len(import_df) > 0: print("\nImport success:\n", import_df.info())
     return import_df
 
 

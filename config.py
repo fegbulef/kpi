@@ -20,8 +20,10 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
                    "Q3": ["FEB","MAR","APR"], "Q4": ["MAY","JUN","JUL"]},
 
-           "datadir": "data",    #r"C:\Projects\autokpi\data",
-           "savedir": "output",  #r"C:\Projects\autokpi\output",
+           "datadir": "data",       #r"C:\Projects\autokpi\data",
+           "savedir": "pyout",      #r"C:\Projects\autokpi\output",
+
+           "fontdir": "data",       # Cisco Fonts
              
            "fyq_start": "01/08/2016",       # Start FYQ 
 
@@ -92,26 +94,23 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
                                "apidatefmt": "%y%m%d %H%M%S"},
 
                      #  ACANO - [ATC]
-                     "ACANO": {"apiserver": "https://atc.uxb.ciscolabs.com/api/active/batch?",
+                     "ACANO": {"apiserver": "https://atc.uxb.ciscolabs.com/api/batch/?",
 
                                "user": "KPI",
                                "password": "65wEv7u6sB",
 
-                               "products": ["meeting_apps","meetingserver","cmm"],
-                               "product_column": "Product",
-                               "priority_column": "SIR",
-                               "open_column": "OPENED",
-                               "closed_column": "CLOSED",
-                               "id_column": "Identifier",
-                               "id_api": "id",
-                               "status_column": "Status",
+                               "schedules": {"Server": "2", "Client": "125", "SecurityVTP": "151"},
+                               "columns": ["description", "jobs_count", "jobs_done", "incomplete", "noresult", "passed", "failed", "crashes"],
 
-                               "kpi": {"ATC": {"kpi_title": "XXX ATC Defects by",
-                                               "query": "sort(-id)"}},
-                             
-                               "xlcolumns": "A:J",
-                               "xldatefmt": "%y%m%d %H%M%S",
-                               "apidatefmt": "%y%m%d %H%M%S"}
+                               "open_column": "rundate",    # column for date filtering
+
+                               "kpi": {"ATC": {"kpi_title": {"main": "ATC XXX Tests Implemented (last 18 months)",
+                                                             "passed": "ATC XXX Passes vs Tests Run (last 18 months)",
+                                                             "%passed": "% ATC XXX Passes vs Tests Run(last 18 months)"},
+
+                                               "query": "schedule=XXX&sort(-id)"}},
+                            
+                               "apidatefmt": "%Y-%m-%dT%H:%M:%S.%f"}
                      
                      }
            }

@@ -16,6 +16,7 @@ import time
 import config   # user defined module
 
 try:
+    import xlrd
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -24,6 +25,57 @@ try:
 except ImportError:
     print("Please make sure the following modules are installed: 'pandas'; 'matplotlib'")
     sys.exit(-1)
+
+
+
+#----------------------------------------------------------------
+# Setup plot: label font and fontsize
+# return Plot Figure
+#----------------------------------------------------------------
+def setup_plot(kpi, chart_title, xlim):
+
+    fig, ax1 = plt.subplots(figsize=(9,7))
+        
+    # set font family and tick label sizes
+    plt.rc('font', family='Calibri')
+    plt.rc('xtick', labelsize=12)
+    plt.rc('ytick', labelsize=12)
+
+    plt.grid('on', linestyle='--', alpha=0.5)
+    plt.title(chart_title, color='black', fontsize=16)
+
+    if not kpi == 'ATC':
+        plt.xlim(-0.35, xlim)
+        
+    return plt, fig, ax1
+
+
+#----------------------------------------------------------------
+# Convert excel date to datetime.date
+# return datetime
+#----------------------------------------------------------------
+def convert_date(d):
+    return xlrd.xldate.xldate_as_datetime(d, 0)
+
+
+#----------------------------------------------------------------
+# Setup date labels for plot
+# return list (dates as strings)
+#----------------------------------------------------------------
+def get_xtick_labels(ax1):
+
+    xticks = ax1.get_xticks().tolist()
+    ax1.set_xticklabels(xticks)
+
+    xticklabels = [float(label.get_text()) for label in ax1.get_xticklabels()]
+
+    xlabels = []
+    for i in range(len(xticklabels)):
+        dt = pd.to_datetime(convert_date(xticklabels[i]), format="%Y-%m-%d")
+        dt = dt.strftime("%d-%b-%Y")
+        xlabels.append(dt)
+            
+    return xlabels
 
 
 #----------------------------------------------------------------
@@ -53,9 +105,38 @@ def get_chart_labels(kpi):
     return axopen, axclosed, axdefects
 
 
-#-------------------------------------
-# Plot KPI chart 
-#-------------------------------------
+#----------------------------------------------------------------
+# Derive chart name
+# return string (filename)
+#----------------------------------------------------------------
+def get_filename(kpi, figname, product, istest):
+
+    ext = '_Test' if istest else ''  # run from test module
+    
+    if kpi == 'ATC':
+        figname = str.join('', [kpi, '_', product, figname, ext, '.png'])
+
+    else:
+        ext = str.join('',['_', figname, ext, '.png'])
+        
+        if 'All' in figname:
+            figname = str.join('', [kpi, ext])
+        else:
+            figname = str.join('', [kpi, '_', product, ext])
+            
+    cwd = os.getcwd()
+    filename = os.path.join(cwd, config.autokpi["savedir"], figname)
+
+    if os.path.exists(filename):
+        os.remove(filename)
+        time.sleep(2)   # make sure file is deleted 
+
+    return filename
+
+
+#----------------------------------------------------------------
+# Plot KPI chart: for JIRA, PSIRT, CDETS 
+#----------------------------------------------------------------
 def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
     
     if 'Months' in xaxis_str:
@@ -66,23 +147,12 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
     print("\nPlotting chart", kpi, project_code, "for", xaxis_str, "......")
 
     try:
-        fig, ax1 = plt.subplots(figsize=(10,8))
+        
+        plt, fig, ax1 = setup_plot(kpi, chart_title, len(df))
 
-        # set font family and tick label sizes
-        plt.rc('font', family='Calibri')
-        plt.rc('xtick', labelsize=14)
-        plt.rc('ytick', labelsize=14)
-
-        # set constants for chart
+        # set bar constants
         bar_width = 0.35
         opacity = 0.4
-
-        plt.grid('on', linestyle='--', alpha=0.5)
-
-        plt.xlim(left=-0.35)
-        plt.xlim(right=len(df))
-
-        plt.title(chart_title, color='black', fontsize=18)
 
         #************************************
         # plot open/closed defects as bars
@@ -105,7 +175,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
                         alpha=opacity, color='green',
                         label=axclosed)
 
-        yplt1 = plt.ylabel("Defects", fontsize=16)
+        yplt1 = plt.ylabel("Defects", fontsize=14)
         yplt1.set_bbox(dict(facecolor='black', alpha=0.7))
         yplt1.set_color('white')
  
@@ -139,7 +209,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         ax2 = ax1.twinx()
 
-        yplt2 = plt.ylabel("MTTR(days)", fontsize=16)
+        yplt2 = plt.ylabel("MTTR(days)", fontsize=14)
         yplt2.set_bbox(dict(facecolor='darkblue', alpha=0.7))
         yplt2.set_color('white')
         
@@ -166,31 +236,14 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=12, loc='upper right')
 
-        
-        fig.tight_layout()
-
         #*************
         # save chart
         #*************
 
-        ext = ''
-        if istest:              # run from test module
-            ext = '_Test'
-
-        ext = str.join('',['_', xaxis_str, ext, '.png'])
+        fig.tight_layout()
+         
+        savefile = get_filename(kpi, xaxis_str, project_code, istest)
         
-        if 'All' in xaxis_str:
-            figname = str.join('', [kpi, ext])
-        else:
-            figname = str.join('', [kpi, '_', project_code, ext])
-            
-        cwd = os.getcwd()
-        savefile = os.path.join(cwd, config.autokpi["savedir"], figname)
-
-        if os.path.exists(savefile):
-            os.remove(savefile)
-            time.sleep(2)   # make sure file is deleted 
-            
         fig.savefig(savefile)
         plt.close(fig)
 
@@ -199,6 +252,84 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
     except Exception as e:
         print("ERROR - {}".format(str(e)))
         print("ERROR - Could not create chart for", kpi, project_code)
+        return None
+
+    return savefile
+
+
+#-------------------------------------
+# Plot ATC charts 
+#-------------------------------------
+def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
+    
+    print("\nPlotting ATC chart for", product, chart_key, "......")
+
+    try:
+
+        max_xlim = df["rundate_int"].max()
+
+        index = df.index.values
+        xaxis = df["rundate_int"].values.tolist()
+
+        plt, fig, ax1 = setup_plot('ATC', chart_title, max_xlim)  
+
+        #*************#
+        # plot tests  #
+        #*************#
+
+        plt.xlabel("Test Run Date (and Time)", fontsize=12)
+ 
+        if chart_key.upper() == 'MAIN':
+
+            figname = 'AllTests'
+            color = 'blue'
+            yaxis = df["jobs_count"].values.tolist()
+            ax1.set_ylabel("ATC Tests Implemented", fontsize=12)
+
+            ax1.scatter(xaxis, yaxis, c=color, s=15, marker='o')
+
+        elif '%' in chart_key.upper():      # '%Passes'
+
+            figname = '%Passes'
+            color = 'green'
+            yaxis = df["%passed"].values.tolist()
+            ax1.set_ylabel("% ATC Passes", fontsize=12)
+
+            ax1.scatter(xaxis, yaxis, c=color, s=15, marker='o')
+
+        else:                               # 'Passes'
+
+            figname = 'Passes'
+            yaxis1 = df["passed"].values.tolist()
+            yaxis2 = df["jobs_count"].values.tolist()
+            ax1.set_ylabel("ATC Passes and Tests Run", fontsize=12) 
+            
+            ax1.scatter(xaxis, yaxis1, label='Pass', color='green', s=10, marker='o')
+            ax1.scatter(xaxis, yaxis2, label='Total Run', color='blue', s=10, marker='o')
+
+            plt.legend(fontsize=10, loc='upper left')
+
+
+        # set xaxis intervals
+        interval = len(df)//18
+        ax1.set_xlim(xaxis[0], xaxis[-1]+1)
+        ax1.xaxis.set_major_locator(ticker.MultipleLocator(interval))
+
+        # change labels to dates
+        xlabels = get_xtick_labels(ax1)
+        ax1.set_xticklabels(xlabels, rotation=90)
+
+        fig.tight_layout()
+         
+        savefile = get_filename('ATC', figname, product, istest)
+        fig.savefig(savefile)
+        plt.close(fig)
+
+        #plt.show()
+
+    except Exception as e:
+        print("ERROR - {}".format(str(e)))
+        print("ERROR - Could not create ATC chart for", product, figname)
         return None
 
     return savefile
