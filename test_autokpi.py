@@ -81,7 +81,7 @@ def test_jira_import_from_excel():
 
 #---------------------------------------------------------
 # 2.2 Check Excel file import: CDETS
-#@pytest.mark.skip(reason="Not required for Production")
+@pytest.mark.skip(reason="Not required for Production")
 def test_cdets_import_from_excel():
 #---------------------------------------------------------
     excel_df = importdata.import_from_excel(CDETSconfig, 'CDETS', 'PSIRT')
@@ -105,9 +105,9 @@ def test_import_from_jira_api():
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_qddts_webserver():
 #---------------------------------------------------------
-    qddts_json = importdata.get_qddts_results(CDETSconfig, 'PSIRT')
+    qddts_json = importdata.get_qddts_data(CDETSconfig, 'PSIRT')
     if qddts_json:
-        results = importdata.import_qddts_results(qddts_json, CDETSconfig)
+        results = importdata.process_qddts_results(qddts_json, CDETSconfig)
         assert len(results) > 0
     
 
@@ -118,9 +118,11 @@ def test_reformat_import_dates():
     import_df = pd.read_csv(CFPD_raw)   
     reformat_df = dataprep.reformat_df_dates(import_df, JIRAconfig, False)
     assert len(reformat_df) > 0
-    
-    test_reformat_dates = pd.read_csv(CFPD_reformat)      
-    assert reformat_df[["OpenMonth","ClosedMonth"]].equals(test_reformat_dates[["OpenMonth","ClosedMonth"]])
+
+    # Test date formats
+    for i in reformat_df.index:
+        assert datetime.strptime(reformat_df['OpenMonth'][i], "%b-%y")
+        assert datetime.strptime(reformat_df['ClosedMonth'][i], "%b-%y")
 
 
 #---------------------------------------------------------
@@ -147,7 +149,8 @@ def test_open_closed_counts():
     
 
 #---------------------------------------------------------
-# 5. Calculate MTTR days 
+# 5. Calculate MTTR days
+#@pytest.mark.skip(reason="Tested")
 def test_mttr_days():
 #---------------------------------------------------------
     fyq_df = pd.DataFrame(test_months)
@@ -164,7 +167,8 @@ def test_mttr_days():
 
 
 #---------------------------------------------------------
-# 6. MTTR calculations 
+# 6. MTTR calculations
+#@pytest.mark.skip(reason="Tested")
 def test_mttr_calc():
 #---------------------------------------------------------
     plot_df = pd.read_csv(CFPD_plot_data)
@@ -175,7 +179,8 @@ def test_mttr_calc():
     
 
 #---------------------------------------------------------
-# 7. Get plot months 
+# 7. Get plot months
+#@pytest.mark.skip(reason="Tested")
 def test_get_plot_months():
 #---------------------------------------------------------
     months_df = dataprep.get_plot_months(START_DT, END_DT)
@@ -188,7 +193,8 @@ def test_get_plot_months():
 
 
 #---------------------------------------------------------
-# 8. Get plot FYQs 
+# 8. Get plot FYQs
+#@pytest.mark.skip(reason="Tested")
 def test_get_plot_fyqs():
 #---------------------------------------------------------
     dt = datetime.today()
@@ -213,6 +219,7 @@ def test_get_plot_fyqs():
         
 #---------------------------------------------------------
 # 9. Plot Monthly KPI chart
+#@pytest.mark.skip(reason="Tested")
 def test_monthly_kpi_chart():
 #---------------------------------------------------------
     chart_title = JIRAconfig["kpi"]['CFPD']["kpi_title"].replace('XXX', 'CMA')
@@ -236,6 +243,7 @@ def test_monthly_kpi_chart():
 
 #---------------------------------------------------------
 # 10. Plot FYQ KPI chart
+#@pytest.mark.skip(reason="Tested")
 def test_fyq_kpi_chart():
 #---------------------------------------------------------
     chart_title = JIRAconfig["kpi"]['CFPD']["kpi_title"].replace('XXX', 'CMA')
