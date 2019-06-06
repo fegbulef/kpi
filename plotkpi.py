@@ -125,7 +125,7 @@ def get_filename(kpi, figname, product, istest):
             figname = str.join('', [kpi, '_', product, ext])
             
     cwd = os.getcwd()
-    filename = os.path.join(cwd, config.autokpi["savedir"], figname)
+    filename = os.path.join(cwd, config.autokpi["savedir_test"], figname)
 
     if os.path.exists(filename):
         os.remove(filename)

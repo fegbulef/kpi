@@ -20,10 +20,11 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
                    "Q3": ["FEB","MAR","APR"], "Q4": ["MAY","JUN","JUL"]},
 
-           "datadir": "data",       #r"C:\Projects\autokpi\data",
-           "savedir": "pyout",      #r"C:\Projects\autokpi\output",
+           "datadir": "data",       
+           "savedir": "pyout",
+           "fontdir": "data",               # Cisco Fonts
 
-           "fontdir": "data",       # Cisco Fonts
+           "savedir_test": "output",      
              
            "fyq_start": "01/08/2016",       # Start FYQ 
 
