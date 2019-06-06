@@ -81,7 +81,7 @@ def test_jira_import_from_excel():
 
 #---------------------------------------------------------
 # 2.2 Check Excel file import: CDETS
-@pytest.mark.skip(reason="Not required for Production")
+#@pytest.mark.skip(reason="Not required for Production")
 def test_cdets_import_from_excel():
 #---------------------------------------------------------
     excel_df = importdata.import_from_excel(CDETSconfig, 'CDETS', 'PSIRT')
@@ -91,7 +91,7 @@ def test_cdets_import_from_excel():
     
 #---------------------------------------------------------
 # 2.3 Check API import: JIRA
-@pytest.mark.skip(reason="Tested")
+#@pytest.mark.skip(reason="Tested")
 def test_import_from_jira_api():
 #---------------------------------------------------------
     jira_api = importdata.get_jira_client(JIRAconfig, USER, PWD, 'CFPD')
@@ -102,7 +102,7 @@ def test_import_from_jira_api():
 
 #---------------------------------------------------------
 # 2.4 Check API import: CDETS (QDDTS)
-@pytest.mark.skip(reason="Tested")
+#@pytest.mark.skip(reason="Tested")
 def test_import_from_qddts_webserver():
 #---------------------------------------------------------
     qddts_json = importdata.get_qddts_results(CDETSconfig, 'PSIRT')
