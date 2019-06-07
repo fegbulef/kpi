@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python3
 
 """********************************************************************
 Created by:   Fiona Egbulefu (Contractor)
@@ -19,10 +19,12 @@ try:
     import xlrd
     import numpy as np
     import pandas as pd
+
+    import matplotlib 
+    matplotlib.use('Agg')
+    
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
-
-    from matplotlib import font_manager as fm
     
 except ImportError:
     print("Please make sure the following modules are installed: 'pandas'; 'matplotlib'")
@@ -38,7 +40,7 @@ def get_font():
 
     cwd = os.getcwd()
     fontpath = os.path.join(cwd, config.autokpi["fontdir"], "CiscoSansTTRegular.ttf")
-    fontproperties = fm.FontProperties(fname=fontpath)
+    fontproperties = matplotlib.font_manager.FontProperties(fname=fontpath)
     
     return fontproperties
 
