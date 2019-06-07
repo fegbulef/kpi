@@ -22,7 +22,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
 
            "datadir": "data",       
            "savedir": "pyout",
-           "fontdir": "data",               # Cisco Fonts
+           "fontdir": "CiscoFonts", 
 
            "savedir_test": "output",      
              
@@ -107,7 +107,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
 
                                "kpi": {"ATC": {"kpi_title": {"main": "ATC XXX Tests Implemented (last 18 months)",
                                                              "passed": "ATC XXX Passes vs Tests Run (last 18 months)",
-                                                             "%passed": "% ATC XXX Passes vs Tests Run(last 18 months)"},
+                                                             "%passed": "% ATC XXX Passes vs Tests Run (last 18 months)"},
 
                                                "query": "schedule=XXX&sort(-id)"}},
                             

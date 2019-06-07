@@ -21,6 +21,8 @@ try:
     import pandas as pd
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
+
+    from matplotlib import font_manager as fm
     
 except ImportError:
     print("Please make sure the following modules are installed: 'pandas'; 'matplotlib'")
@@ -29,21 +31,37 @@ except ImportError:
 
 
 #----------------------------------------------------------------
+# Setup Cisco fonts
+# return fontproperties
+#----------------------------------------------------------------
+def get_font():
+
+    cwd = os.getcwd()
+    fontpath = os.path.join(cwd, config.autokpi["fontdir"], "CiscoSansTTRegular.ttf")
+    fontproperties = fm.FontProperties(fname=fontpath)
+    
+    return fontproperties
+
+    
+#----------------------------------------------------------------
 # Setup plot: label font and fontsize
 # return Plot Figure
 #----------------------------------------------------------------
 def setup_plot(kpi, chart_title, xlim):
 
     fig, ax1 = plt.subplots(figsize=(9,7))
-        
-    # set font family and tick label sizes
-    plt.rc('font', family='Calibri')
-    plt.rc('xtick', labelsize=12)
-    plt.rc('ytick', labelsize=12)
 
     plt.grid('on', linestyle='--', alpha=0.5)
-    plt.title(chart_title, color='black', fontsize=16)
+        
+    # set title and label sizes
+    #plt.rc('font', family='Calibri')
+    fontproperties = get_font()
 
+    plt.title(chart_title, color='black', fontproperties=fontproperties, size=14)
+    
+    plt.rc('xtick', labelsize=10)
+    plt.rc('ytick', labelsize=10)
+    
     if not kpi == 'ATC':
         plt.xlim(-0.35, xlim)
         
@@ -125,7 +143,8 @@ def get_filename(kpi, figname, product, istest):
             figname = str.join('', [kpi, '_', product, ext])
             
     cwd = os.getcwd()
-    filename = os.path.join(cwd, config.autokpi["savedir_test"], figname)
+    savedir = config.autokpi["savedir_test"] if istest else config.autokpi["savedir"]
+    filename = os.path.join(cwd, savedir, figname)
 
     if os.path.exists(filename):
         os.remove(filename)
@@ -175,7 +194,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
                         alpha=opacity, color='green',
                         label=axclosed)
 
-        yplt1 = plt.ylabel("Defects", fontsize=14)
+        yplt1 = plt.ylabel("Defects", fontsize=12)
         yplt1.set_bbox(dict(facecolor='black', alpha=0.7))
         yplt1.set_color('white')
  
@@ -209,7 +228,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         ax2 = ax1.twinx()
 
-        yplt2 = plt.ylabel("MTTR(days)", fontsize=14)
+        yplt2 = plt.ylabel("MTTR(days)", fontsize=12)
         yplt2.set_bbox(dict(facecolor='darkblue', alpha=0.7))
         yplt2.set_color('white')
         
@@ -234,7 +253,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         h2, l2 = ax2.get_legend_handles_labels()
 
-        ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=12, loc='upper right')
+        ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=10, loc='upper right')
 
         #*************
         # save chart
