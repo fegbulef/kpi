@@ -128,7 +128,7 @@ def process_atc_schedules(toolcfg, tool, kpi):
             chart_title = chart_title.replace('XXX', sched_nm)
             kpi_chart = plotkpi.plot_atc_chart(df_atc_plot, sched_nm, chart_title, chart_key)
 
-            if kpi_chart: print("\nATC chart created for {0} {1}".format(sched_nm, chart_key))
+            if kpi_chart: print("\n{0} {1} chart created for {2}".format(sched_nm, chart_key, kpi_chart))
 
 
     return None
@@ -302,34 +302,36 @@ def main(kpi_dict, importfromxl):
                     kpi_chart = plotkpi.plot_kpi_chart(df_all_by_fyq, product_str, chart_title, kpi, 'AllFYQ')
                     if kpi_chart:            
                         print("\nAll FYQ chart created:", kpi_chart)
-
         
     return
-            
+
+
+#*******************************
+# M A I N
+#*******************************
     
+parser = argparse.ArgumentParser()
 
-if "__name__" == "__main__":
+# Get parameters
+parser.add_argument("-kpi", type=str, help="List KPI system or codes separated by comma e.g JIRA,CDETS,..", required=True)
+parser.add_argument("-fromxl", type=str, help="Import data from Excel? Y/N")
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-
-    # Get parameters
-    parser.addargument("-kpi", type=string, help="List KPI system or codes separated by comma e.g JIRA,CDETS,..")
-    parser.addargument("-fromxl", type=string, help="Import data from Excel? Y/N")
-    args = parser.parse_args()
-
-    importfromxl = False
-    kpi_list = args.kpi.split()
-    kpi_dict = get_kpi_codes(kpi_list)
+importfromxl = False
+kpi_list = args.kpi.split(',')
+kpi_dict = get_kpi_codes(kpi_list)
     
-    # Validate - kpi is required
-    if not kpi_dict:
-        print("kpi codes invalid or not supplied")
-        sys.exit(-1)
-    
+# Validate - kpi is required
+if kpi_dict:
+
     if args.fromxl:
         if args.fromxl.upper() == 'Y': importfromxl = True
 
-    
     main(kpi_dict, importfromxl)
+    
+else:
+    
+    print("\nERROR - KPI codes invalid or not supplied")
+        
 
-    print("\n\nFinished")
+print("\nAll Done!\n")

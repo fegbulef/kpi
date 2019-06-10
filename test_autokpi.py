@@ -32,6 +32,7 @@ import plotkpi
 
 JIRAconfig = config.autokpi["tools"]["JIRA"]
 CDETSconfig = config.autokpi["tools"]["CDETS"]
+ACANOconfig = config.autokpi["tools"]["ACANO"]
 
 USER = config.autokpi["auth"]["user"]
 PWD = config.autokpi["auth"]["password"]
@@ -96,7 +97,7 @@ def test_import_from_jira_api():
 #---------------------------------------------------------
     jira_api = importdata.get_jira_client(JIRAconfig, USER, PWD, 'CFPD')
     if jira_api:
-        jira_df = importdata.get_jira_issues(jira_api, JIRAconfig, 'CFPD')
+        jira_df = importdata.get_jira_issues(JIRAconfig, jira_api, 'CFPD')
         assert len(jira_df) > 0
             
 
@@ -107,10 +108,27 @@ def test_import_from_qddts_webserver():
 #---------------------------------------------------------
     qddts_json = importdata.get_qddts_data(CDETSconfig, 'PSIRT')
     if qddts_json:
-        results = importdata.process_qddts_results(qddts_json, CDETSconfig)
+        results = importdata.process_qddts_results(CDETSconfig, qddts_json)
         assert len(results) > 0
     
 
+#---------------------------------------------------------
+# 2.5 Check API import: ACANO
+#@pytest.mark.skip(reason="Tested")
+def test_import_from_acano_api():
+#---------------------------------------------------------
+    user = ACANOconfig["user"]
+    pwd = ACANOconfig["password"]
+
+    parms = '2'     # VM Server
+
+    acano_json = importdata.get_acano_schedule(ACANOconfig, user, pwd, 'ATC', parms)
+
+    if acano_json:
+        results = importdata.import_acano_schedule(ACANOconfig, acano_json)
+        assert len(results) > 0
+
+    
 #---------------------------------------------------------
 # 3. Reformat import dates 
 def test_reformat_import_dates():

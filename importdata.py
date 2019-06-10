@@ -153,7 +153,8 @@ def import_from_excel(toolcfg, tool, kpi):
         print("\nERROR - {}".format(str(e)))
 
 
-    print("\nImported DF:\n", import_df.head())
+    if not import_df is None: print("\nImported DF:\n", import_df.head())
+
     return import_df
 
 
@@ -185,7 +186,7 @@ def get_jira_client(toolcfg, user, pwd, kpi):
 # Import JIRA issues
 # - returns DataFrame structure 
 #-------------------------------------------------------------
-def get_jira_issues(jra, toolcfg, kpi):
+def get_jira_issues(toolcfg, jra, kpi):
 
     # get JQL query from config
     kpi_jql = toolcfg["kpi"][kpi]["jql"]
@@ -296,7 +297,7 @@ def get_qddts_data(toolcfg, kpi):
 # Import Webserver results
 # - returns Dataframe structure
 #-------------------------------------------------------------
-def process_qddts_results(qddts_json, toolcfg):
+def process_qddts_results(toolcfg, qddts_json):
 
     api_data = get_api_data_structure(toolcfg)
 
@@ -397,12 +398,12 @@ def import_from_api(toolcfg, tool, kpi, parms=None):
     if tool == 'JIRA':
         jra = get_jira_client(toolcfg, user, pwd, kpi)
         if jra:
-            import_df = get_jira_issues(jra, toolcfg, kpi)
+            import_df = get_jira_issues(toolcfg, jra, kpi)
         
     elif tool == 'CDETS':
         qddts_json = get_qddts_data(toolcfg, kpi)
         if qddts_json:
-            import_df = process_qddts_results(qddts_json, toolcfg)
+            import_df = process_qddts_results(toolcfg, qddts_json)
 
     elif tool == 'ACANO':
         if not parms:
