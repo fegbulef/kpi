@@ -20,7 +20,7 @@ from datetime import datetime
 
 # user defined modules
 import config
-import main_test
+import autokpi
 import importdata
 import dataprep
 import plotkpi
@@ -66,7 +66,7 @@ CFPD_plot_data = os.path.join(CWD, "test_data", "CFPD_plot_data.csv")
 # 1. Validate kpi codes input 
 def test_get_kpi_codes():
 #---------------------------------------------------------
-    kpi_dict = main_test.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
+    kpi_dict = autokpi.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
     assert kpi_dict == {'JIRA': ['IFD','AllCFD'], 'CDETS': ['PSIRT']}
     
 
