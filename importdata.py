@@ -421,32 +421,5 @@ def import_from_api(toolcfg, tool, kpi, parms=None):
     #import_df.to_csv(savecsv, sep=',')
 
     if len(import_df) > 0: print("\nImport success:\n", import_df.info())
+
     return import_df
-
-
-#-----------
-# M A I N
-#-----------
-
-def main(importfromxl, tool, kpi):
-
-    toolcfg = config.autokpi["tools"][tool]
-
-    if importfromxl:
-        import_df = import_from_excel(toolcfg, tool, kpi)
-    else:
-        import_df = import_from_api(toolcfg, tool, kpi)
-            
-    return
-
-    
-
-if "__name__" == "__main__":
-    
-# Test JIRA API import 
-    main(False, 'JIRA', 'CFPD')
-
-# Test CDETS import from QDDTS API
-    main(False, 'CDETS', 'PSIRT')
-
-    print("Finished")
