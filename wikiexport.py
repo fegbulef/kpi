@@ -14,7 +14,8 @@ import sys
 import time
 import win32clipboard
 
-import config # user defined   
+import config # user defined
+import logger # uerr defined
 
 from shutil import copyfile
 
@@ -26,6 +27,22 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait 
 from selenium.webdriver.common.action_chains import ActionChains
 
+# setup log
+kpilog = logger.get_logger(config.autokpi["logname"])
+
+
+#-----------------------------------------------
+# Startup browser (Firefox)
+# - returns browser object
+#-----------------------------------------------
+def start_browser():
+
+    ff_browser = webdriver.Firefox()
+    ff_browser.implicitly_wait(10)
+    ff_browser.maximize_window()
+
+    return ff_browser
+
 
 #-----------------------------------------------
 # Get Wiki page
@@ -34,21 +51,17 @@ from selenium.webdriver.common.action_chains import ActionChains
 def get_wikipage(url):
 
     try:
-        browser = webdriver.Firefox()
-
-        browser.implicitly_wait(10)
-        browser.maximize_window()
-
+                           
+        browser = start_browser()
         browser.get(url)
 
     except Exception as e:
-        print ("\nERROR - Unable to access Confluence: {}".format(str(e)))
-
+                           
+        kpilog.error("Unable to access Confluence: {}".format(str(e)))
         if browser:
             browser.quit()
             
         return None
-
 
     return browser
 
@@ -58,6 +71,9 @@ def get_wikipage(url):
 # - returns True/False (logged in)
 #-----------------------------------------------
 def log_into_wiki(browser, auth_user, auth_pwd):
+
+    if not browser.find_element_by_name("login"):                   # test for login page
+        return True
 
     try:
         # access login boxes
@@ -77,13 +93,13 @@ def log_into_wiki(browser, auth_user, auth_pwd):
         
         if loggedin:
             if "KPI" in loggedin.get_attribute("content"):
-                print("User",auth_user,"Login: OK")   
+                kpilog.info("User {0} Login: OK".format(auth_user))
                 return True
             else:
-                print("\nERROR - Unable to access KPI page; Check user credentials")
+                kpilog.error("Unable to access Confluence; Check user credentials")
             
     except Exception as e:
-        print("\nERROR - Unable to access Confluence: {}".format(str(e)))
+        kpilog.error("Unable to access Confluence {}".format(str(e)))
 
 
     return False
@@ -95,7 +111,7 @@ def log_into_wiki(browser, auth_user, auth_pwd):
 #-------------------------------------------------------------
 def copy_chart_to_clipboard(chartpath):
 
-    print("...copy saved chart to clipboard")
+    kpilog.debug("...copy saved chart to clipboard")
 
     try:
         # open chart
@@ -114,7 +130,7 @@ def copy_chart_to_clipboard(chartpath):
         return True
 
     except Exception as e:
-        print("\nERROR - {}".format(str(e)))
+        kpilog.error("Exception: {}".format(str(e)))
 
     return False
 
@@ -138,9 +154,9 @@ def get_chart(img_name):
            or (img_name == "CMSAM-PSIRT.PNG" and chart == "PSIRT_AllMonths.png"):
     
             chartpath = os.path.join(chartfiles, chart)
-            print("\nChart exists:", chartpath)
+            kpilog.debug("Chart exists: {}".format(chartpath))
+                           
             break
-        
         
     return chartpath
 
@@ -151,7 +167,8 @@ def get_chart(img_name):
 #-------------------------------------------------------------
 def update_image_title(browser, img_id, img_name, frame):
 
-    print("\n...reselect image and update image title")
+    kpilog.debug("...reselect image and update image title")
+
     css_selector = ''.join(['img[data-linked-resource-id="', img_id, '"]'])
     element = browser.find_element_by_css_selector(css_selector)
     # bring image to view
@@ -229,7 +246,8 @@ def update_image(browser, element, img_name, cut_or_paste):
         actions.move_to_element(element).double_click(element).perform()                
         time.sleep(3)
 
-        print("...cut/remove image")
+        kpilog.debug("...cut/remove image")
+                           
         actions.key_down(Keys.CONTROL).send_keys('x').key_up(Keys.CONTROL).perform()    
         time.sleep(3)
 
@@ -244,7 +262,8 @@ def update_image(browser, element, img_name, cut_or_paste):
         actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
         time.sleep(3)
 
-        print("...update new image attributes")
+        kpilog.debug("...update new image attributes")
+                           
         new_img = parent.find_element_by_tag_name("img")       # use parent to get new image
         update_image_attributes(browser, new_img, img_name)
 
@@ -275,7 +294,7 @@ def publish_updates(browser, blnCancel, switch_to_frame):
             revert_page_btn.click()
             time.sleep(3)
 
-            print("\nAll updates cancelled!")
+            kpilog.info("All updates canceled!")
 
             return False
             
@@ -285,7 +304,7 @@ def publish_updates(browser, blnCancel, switch_to_frame):
             updatepage.click()
             time.sleep(3)
 
-            print("\nAll updates published!")
+            kpilog.info("All updates published!")
 
     else:   # no changes to page
 
@@ -341,7 +360,7 @@ def update_charts(browser):
             editpage.click()
             time.sleep(3)
 
-            print("\nPrepare page for updates...")
+            kpilog.info("Prepare page for updates...")
 
             # switch to frame containing images 
             frame = browser.find_element_by_xpath("//iframe[@id='wysiwygTextarea_ifr']")
@@ -351,33 +370,34 @@ def update_charts(browser):
 
             for img_id, (img_name, img_chart) in img_chart.items():
 
-                print("\nImage selected for update:", img_name, img_chart)
+                kpilog.debug("Image selected for update: {0} {1}".format(img_name, img_chart))
                 css_selector = ''.join(['img[data-linked-resource-id="', img_id, '"]'])
                 element = browser.find_element_by_css_selector(css_selector)
 
                 parent = update_image(browser, element, img_name, 'x')          # cut
 
                 if copy_chart_to_clipboard(img_chart):  # send saved chart to clipboard
-                    print("\nPaste new image")
+                    kpilog.debug("Paste new image")
                     new_img = update_image(browser, parent, img_name, 'v')      # paste
 
-                    print("\nUpdate new image title")
+                    kpilog.debug("Update new image title")
                     new_img_id = new_img.get_attribute("data-linked-resource-id")
                     update_image_title(browser, new_img_id, img_name, frame)
                     
                 else:
-                    print("\nERROR - Update cancelled: Could not update", img_name)
+                    kpilog.error("Update cancelled; Could not update {0}".format(img_name))
                     blnCancel = True
                     break
 
 ##                break    TESTING
             
         else:
-            print("\nERROR - No images found for update")
+            kpilog.error("No images found for update")
 
             
     except Exception as e:
-        print("\nERROR - Update cancelled: {}".format(str(e)))
+
+        kpilog.error("Update cancelled: {}".format(str(e)))
         blnCancel = True
 
 
@@ -407,22 +427,20 @@ def main(wikitype):
         kpi_url = config.autokpi["wikiLive"]
 
     try:
-        print("\nStart Wiki upload....")
+        kpilog.info("Start Wiki upload....")
         browser = get_wikipage(kpi_url)
 
         if not browser:
             sys.exit(-1)
-            
-        if browser.find_element_by_name("login"):
 
-            if log_into_wiki(browser, auth_user, auth_pwd):
-
-                if update_charts(browser):
-                    print("\nCharts uploaded successfully!")
+        # validate login credentials; upload charts
+        if log_into_wiki(browser, auth_user, auth_pwd):
+            if update_charts(browser):
+                kpilog.info("Charts uploaded successfully!")
                     
 
     except Exception as e:
-        print("\nERROR - {}".format(str(e)))
+        kpilog.error("Exception: {}".format(str(e)))
 
 
     finally:
@@ -438,4 +456,4 @@ if "__name__" == "__main__":
    
     main("Test")
 
-    print("Finished")
+    kpilog.info("Finished Wiki Upload")

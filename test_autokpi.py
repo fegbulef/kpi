@@ -17,6 +17,7 @@ import pytest
 
 from jira import JIRA
 from datetime import datetime
+from selenium import webdriver
 
 # user defined modules
 import config
@@ -24,6 +25,7 @@ import autokpi
 import importdata
 import dataprep
 import plotkpi
+import wikiexport
 
 
 #******************
@@ -281,4 +283,23 @@ def test_fyq_kpi_chart():
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
+
+
+#---------------------------------------------------------
+# 11. Test upload to confluence
+#@pytest.mark.skip(reason="Tested")
+def test_wikiexport():
+#---------------------------------------------------------
+    url = config.autokpi["wikiLive"]
+    user = config.autokpi["auth"]["user"]
+    pwd = config.autokpi["auth"]["password"]
+
+    # check url is valid
+    browser = wikiexport.get_wikipage(url)
+    assert not browser is None
+
+    # check auth credentials are valid
+    assert wikiexport.log_into_wiki(browser, user, pwd) == True
+
+    browser.quit()
     
