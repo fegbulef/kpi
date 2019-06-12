@@ -13,7 +13,6 @@ Description:  Functions to filter data, reformat dates and group data
 **************************************************************************"""
 
 import sys
-import config   # user defined module
 
 try:
     import xlrd
@@ -26,6 +25,13 @@ except ImportError:
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+
+# user defined module
+import config   
+import logger
+
+kpilog = logger.get_logger(config.autokpi["logname"])
+
 
 
 #------------------------------------------------------------------------
@@ -87,6 +93,9 @@ def get_plot_months(start_dt, end_dt):
 
     df = months_df.to_frame()
     months_df = df.assign(FYQ=fyq)
+
+    if 'index' in months_df.columns:
+        months_df.drop('index', axis=1, inplace=True)    # index column created by assign
 
     return months_df
 
@@ -155,7 +164,11 @@ def reformat_df_dates(df, toolcfg, importfromxl):
 
     df_reformat = df_formatdate2.assign(ClosedMonth=closed_mmmyy, OpenMonth=open_mmmyy)
 
-    print("\nReformat dates....")
+    if 'index' in df_reformat.columns:
+        df_reformat.drop('index', axis=1, inplace=True)    # index column created by assign
+        
+    kpilog.debug("Reformat dates.....")
+    
     return df_reformat
 
 
@@ -207,7 +220,8 @@ def get_mttr_days(df, months_fyq_df, toolcfg):
 
     mttr_df["MTTR"] = df_calc
 
-    print("\nMttr:\n", mttr_df)  
+    #kpilog.debug("Mttr:\n {0}".format(mttr_df.info()))
+    
     return mttr_df
             
 
@@ -253,7 +267,11 @@ def get_mttr_calcs(df):
     df_updated = df[["Months","FYQ"]]
     df_updated = df_updated.assign(MTTR=mttr_calc)
 
-    print("\nMTTR Calcs:\n", df_updated)
+    if 'index' in df_updated.columns:
+        df_updated.drop('index', axis=1, inplace=True)    # index column created by assign
+
+    #kpilog.debug("MTTR Calcs:\n {0}".format(df_updated))
+    
     return df_updated
 
 
@@ -374,7 +392,8 @@ def get_plot_data(df_open_grp, df_closed_grp, mttr_df, months_fyq_df):
 
     df_plot_data.reset_index(inplace=True)
    
-    print("\nPlot Data:\n", df_plot_data.info())
+    #kpilog.debug("Plot Data:\n {0}".format(df_plot_data.info()))
+    
     return df_plot_data
 
     
@@ -389,6 +408,8 @@ def group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df):
     df_data = df_plot_data.assign(OpenDefects=opendefects)
 
     df_data = df_data.assign(MTTR=mttr_calcs.MTTR)
+    if 'index' in df_data.columns:
+        df_data.drop('index', axis=1, inplace=True)    # index column created by assign
     
     # merge data into months_to_plot
     df_data.reset_index(inplace=True)
@@ -401,7 +422,6 @@ def group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df):
     df_product_by_month.reset_index(inplace=True)
     df_product_by_month.dropna(inplace=True)
    
-    #print("\nMonths group:\n", df_product_by_month)
     return df_product_by_month
                         
 
@@ -422,6 +442,9 @@ def group_counts_by_fyq(df_plot_data, mttr_calcs):
     opendefects = get_open_defects_count(df_grouped)
     df_grouped = df_grouped.assign(OpenDefects=opendefects)
 
+    if 'index' in df_grouped.columns:
+        df_grouped.drop('index', axis=1, inplace=True)    # index column created by assign
+
     # merge mttr calcs for fyq
     df_grouped.set_index("FYQ", inplace=True)
     
@@ -436,7 +459,6 @@ def group_counts_by_fyq(df_plot_data, mttr_calcs):
     df_product_by_fyq.reset_index(inplace=True)
     df_product_by_fyq.dropna(inplace=True)
     
-    #print("\nFYQ group:\n", df_product_by_fyq)
     return df_product_by_fyq
 
 
@@ -469,6 +491,7 @@ def get_atc_plot_data(df, toolcfg):
     df_atc_plot["%passed"] = (df_atc_plot.passed / df_atc_plot.jobs_count)*100
     df_atc_plot["%failed"] = (df_atc_plot.totalfailed / df_atc_plot.jobs_count)*100
 
-    print("\nATC Plot data\n:", df_atc_plot.info())
+    #kpilog.debug("ATC Plot data\n: {0}".format(df_atc_plot.info()))
+    
     return df_atc_plot
             

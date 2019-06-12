@@ -13,6 +13,9 @@ Description:  Configuration setup for tools and codes used in KPI automation.
 
 autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # authorised user
 
+           "logfile": "kpilog.log",
+           "logname": "autokpi",
+
            "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB",
            "wikiTest": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/KPIs+Test+Page",
            "wikilogin": r"https://jira-eng-gpk2.cisco.com/jira/login.jsp",

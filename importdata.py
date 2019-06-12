@@ -14,11 +14,12 @@ Description:  Import raw data for KPI automation process.
 import os
 import sys
 import json
-
 import requests
 import warnings
 
-import config   # user defined module
+# user defined module
+import config
+import logger
 
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -32,7 +33,9 @@ except ImportError:
     print("Please install the python 'pandas' and 'xlrd' modules")
     sys.exit(-1)
 
- 
+# get log
+kpilog = logger.get_logger(config.autokpi["logname"])
+
 
 #------------------------------------------------------------
 # Get list of column names from config
@@ -64,9 +67,9 @@ def get_config_filename(tool, kpi):
     filename = os.path.join(cwd, config.autokpi["datadir"], filename)
     
     if os.path.exists(filename):
-        print("Found:", filename)
+        kpilog.debug("Found: {}".format(filename))
     else:
-        print(filename,"does not exist - check config setup")
+        kpilog.debug("{} does not exist - check config setup".format(filename))
         return None
 
     return filename
@@ -150,10 +153,10 @@ def import_from_excel(toolcfg, tool, kpi):
             import_df = xldf[columns]
             
     except Exception as e:
-        print("\nERROR - {}".format(str(e)))
+        kpilog.error("{}".format(str(e)))
 
-
-    if not import_df is None: print("\nImported DF:\n", import_df.head())
+    if not import_df is None:
+        kpilog.info("Imported records: {0}".format(len(import_df)))
 
     return import_df
 
@@ -172,13 +175,14 @@ def get_jira_client(toolcfg, user, pwd, kpi):
     try:
         jra = JIRA(options=option, auth=(user, pwd))
         if not jra:
-            print("\nERROR - JIRA API Unsuccessful for", kpi)
+            kpi.error("JIRA API Unsuccessful for {0}".format(kpi))
             return None
             
     except JIRAError as e:
-        print("\nJIRA API ERROR - {}".format(api_status_code_desc(e.status_code)))
+        kpilog.error("JIRA API ERROR - {0}".format(api_status_code_desc(e.status_code)))
 
-    print("\nJIRA Connection Status: OK\n")
+    kpilog.info("JIRA Connection Status: OK\n")
+    
     return jra
 
 
@@ -193,7 +197,7 @@ def get_jira_issues(toolcfg, jra, kpi):
 
     # set limits on records to retrieve (500 at a time)
     # (NB: JIRA pulls max of 1000 records in one call)
-    size = 500   
+    size = 1000   
     size_cnt  = 0
 
     id_col = toolcfg["id_column"]
@@ -232,7 +236,7 @@ def get_jira_issues(toolcfg, jra, kpi):
                     api_data[closed_col].append(None)
                 
         except Exception as e:
-            print("\nJIRA ERROR - {}".format(str(e)))
+            kpilog.error("JIRA ERROR - {0}".format(str(e)))
 
     api_df = pd.DataFrame(api_data)
 
@@ -265,7 +269,7 @@ def get_url(toolcfg, kpi, parms=None):
         fields = toolcfg["kpi"][kpi]["fields"]
 
     url = str.join('',[webservice, query, return_type, fields])
-    print("\nURL:", url)
+    kpilog.info("URL: {}".format(url))
     
     return url
 
@@ -283,13 +287,13 @@ def get_qddts_data(toolcfg, kpi):
         
         if not req.status_code == requests.codes.ok:
             req_msg = api_status_code_desc(req)
-            print("\nQDDTS Webservice ERROR - {}".format(req_msg))
+            kpilog.error("QDDTS Webservice ERROR - {0}".format(req_msg))
             return None
         
     except Exception as e:
-        print("\nQDDTS Webservice ERROR - {}".format(str(e)))
+        kpilog.error("QDDTS Webservice ERROR - {0}".format(str(e)))
 
-    print("\nQDDTS Connection: OK\n")
+    kpilog.info("QDDTS Connection: OK")
     return req.json()
 
 
@@ -374,13 +378,14 @@ def get_acano_schedule(toolcfg, user, pwd, kpi, parms):
 
         if not req.status_code == requests.codes.ok:
             req_msg = api_status_code_desc(req)
-            print("\nACANO API ERROR - {}".format(req_msg))
+            kpilog.error("ACANO API ERROR - {0}".format(req_msg))
             return None
             
     except Exception as e:
-        print("\nACANO API ERROR - {}".format(api_status_code_desc(e.status_code)))
+        kpilog.error("ACANO API ERROR - {0}".format(api_status_code_desc(e.status_code)))
 
-    print("\nACANO Connection Status: OK\n")
+    kpilog.info("ACANO Connection Status: OK")
+    
     return req.json()
 
 
@@ -407,7 +412,7 @@ def import_from_api(toolcfg, tool, kpi, parms=None):
 
     elif tool == 'ACANO':
         if not parms:
-            print("ACANO API ERROR - No schedule available to retrieve data")
+            kpilog.error("ACANO API ERROR - No schedule input for data retrieval")
         
         user = toolcfg["user"]
         pwd = toolcfg["password"]
@@ -420,6 +425,7 @@ def import_from_api(toolcfg, tool, kpi, parms=None):
     #savecsv = str.join('',[kpi, '_raw.csv'])
     #import_df.to_csv(savecsv, sep=',')
 
-    if len(import_df) > 0: print("\nImport success:\n", import_df.info())
+    if len(import_df) > 0:
+        kpilog.info("Imported records: {}".format(len(import_df)))
 
     return import_df

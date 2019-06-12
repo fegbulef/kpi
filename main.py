@@ -11,14 +11,23 @@ Description:  Main module that runs the KPI automation process.
 
 *******************************************************************************"""
 
+import os
+import time
 import argparse
-import autokpi  # user defined modules
+
+# user defined modules
+import config
+import logger
+import autokpi  
 
 
 #*************#
 #   M A I N   #
 #*************#
-    
+
+kpilog = logger.setup_logger(config.autokpi["logname"], config.autokpi["logfile"])
+kpilog.info("Starting AutoKPI run.....")
+
 parser = argparse.ArgumentParser()
 
 # Get parameters
@@ -39,8 +48,8 @@ if kpi_dict:
     autokpi.run_autokpi(kpi_dict, importfromxl)
     
 else:
-    
-    print("\nERROR - KPI codes invalid or not supplied")
-        
 
-print("\nAll Done!\n")
+    kpilog.error("KPI codes invalid or not supplied")
+
+kpilog.info("")
+kpilog.info("Finished!")

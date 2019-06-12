@@ -13,7 +13,9 @@ import os
 import sys
 import time
 
-import config   # user defined module
+# user defined module
+import config
+import logger
 
 try:
     import xlrd
@@ -30,6 +32,8 @@ except ImportError:
     print("Please make sure the following modules are installed: 'pandas'; 'matplotlib'")
     sys.exit(-1)
 
+
+kpilog = logger.get_logger(config.autokpi["logname"])
 
 
 #----------------------------------------------------------------
@@ -165,7 +169,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
     else:
         xaxis = 'FYQ'
 
-    print("\nPlotting chart", kpi, project_code, "for", xaxis_str, "......")
+    kpilog.info("Plotting chart {0} {1} for {2} ......".format(kpi, project_code, xaxis_str))
 
     try:
         
@@ -271,8 +275,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         #plt.show()
 
     except Exception as e:
-        print("ERROR - {}".format(str(e)))
-        print("ERROR - Could not create chart for", kpi, project_code)
+        
+        kpilog.error("Could not create chart for {0} {1} \n {}".format(kpi, project_code, format(str(e))))
         return None
 
     return savefile
@@ -283,7 +287,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 #-------------------------------------
 def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
     
-    print("\nPlotting ATC chart for", product, chart_key, "......")
+    kpilog.info("Plotting ATC chart for {0} {1}......".format(product, chart_key))
 
     try:
 
@@ -349,8 +353,8 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         #plt.show()
 
     except Exception as e:
-        print("ERROR - {}".format(str(e)))
-        print("ERROR - Could not create ATC chart for", product, figname)
+
+        kpilog.error("Could not create ATC chart for {0} {1} \n {}".format(product, figname, format(str(e))))
         return None
 
     return savefile
