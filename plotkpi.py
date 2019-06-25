@@ -14,16 +14,16 @@ import sys
 import time
 
 # user defined module
+import util
 import config
-import logger
 
 try:
     import xlrd
     import numpy as np
     import pandas as pd
 
-    import matplotlib 
-    matplotlib.use('Agg')
+    import matplotlib as mpl
+    mpl.use('Agg')
     
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
@@ -33,43 +33,49 @@ except ImportError:
     sys.exit(-1)
 
 
-kpilog = logger.get_logger(config.autokpi["logname"])
+kpilog = util.get_logger(config.autokpi["logname"])
 
 
 #----------------------------------------------------------------
 # Setup Cisco fonts
-# return fontproperties
+# - returns Cisco FontProperties
 #----------------------------------------------------------------
-def get_font():
+def get_custom_font():
 
     cwd = os.getcwd()
     fontpath = os.path.join(cwd, config.autokpi["fontdir"], "CiscoSansTTRegular.ttf")
-    fontproperties = matplotlib.font_manager.FontProperties(fname=fontpath)
-    
+    fontproperties = mpl.font_manager.FontProperties(fname=fontpath, size=10)
+
     return fontproperties
 
     
 #----------------------------------------------------------------
-# Setup plot: label font and fontsize
+# Setup plot: label fonts and fontsize
 # return Plot Figure
 #----------------------------------------------------------------
 def setup_plot(kpi, chart_title, xlim):
 
-    fig, ax1 = plt.subplots(figsize=(9,7))
+    # create plot
+    fig, ax1 = plt.subplots(figsize=(8,5))
 
-    plt.grid('on', linestyle='--', alpha=0.5)
+    ax1.yaxis.grid('on', which='major', linestyle='--', alpha=0.5)
+    
+     # set custom fonts and label sizes
+    custom_font = get_custom_font()
+
+    #if kpi == 'ATC':
+    #    plt.title(chart_title, color='black', fontproperties=fontproperties)
         
-    # set title and label sizes
-    #plt.rc('font', family='Calibri')
-    fontproperties = get_font()
+    #plt.rcParams['font.family'] = customfont.get_name()
+    ax1.xaxis.get_label().set_fontproperties(custom_font)
+    ax1.yaxis.get_label().set_fontproperties(custom_font)
 
-    plt.title(chart_title, color='black', fontproperties=fontproperties, size=14)
-    
-    plt.rc('xtick', labelsize=10)
-    plt.rc('ytick', labelsize=10)
-    
+    for label in (ax1.get_xticklabels() + ax1.get_yticklabels()):
+        label.set_fontproperties(custom_font)
+
     if not kpi == 'ATC':
-        plt.xlim(-0.35, xlim)
+        plt.xlim(-0.7, xlim)
+
         
     return plt, fig, ax1
 
@@ -169,6 +175,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
     else:
         xaxis = 'FYQ'
 
+    fig = None
+
     kpilog.info("Plotting chart {0} {1} for {2} ......".format(kpi, project_code, xaxis_str))
 
     try:
@@ -183,7 +191,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         # plot open/closed defects as bars
         #************************************
         
-        index = df.index.values
+        index = df.index.values - (bar_width/2)
         axopen, axclosed, axdefects = get_chart_labels(kpi)
         
         opencnt = df["OpenCnt"].values.tolist()
@@ -200,19 +208,17 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
                         alpha=opacity, color='green',
                         label=axclosed)
 
-        yplt1 = plt.ylabel("Defects", fontsize=12)
+        yplt1 = plt.ylabel("Defects")
         yplt1.set_bbox(dict(facecolor='black', alpha=0.7))
         yplt1.set_color('white')
- 
-        ax1.set_xticks(index+bar_width/2)
 
-        if 'Months' in xaxis_str:
-            ax1.set_xticklabels(df[xaxis], rotation=90)
-        else:
-            ax1.set_xticklabels(df[xaxis])
-
-        ax1.set_ylim(bottom=0)
+        # format xaxis
+        ax1.set_xticks(index)   #+bar_width/2)
+        ax1.set_xticklabels(df[xaxis], rotation=90)
         
+        # format yaxis
+        ax1.set_ylim(bottom=0)
+
         ax1bottom, ax1top = ax1.get_ylim()
         if ax1top <= 10:
             ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
@@ -220,7 +226,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
             ax1.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
             for t in ax1.yaxis.get_majorticklabels():
                 if t == 0:
-                    t.set_visible(False) 
+                    t.set_visible(False)
+
 
         #**********************
         # plot OpenDefects
@@ -234,12 +241,12 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         ax2 = ax1.twinx()
 
-        yplt2 = plt.ylabel("MTTR(days)", fontsize=12)
+        yplt2 = plt.ylabel("MTTR(days)")
         yplt2.set_bbox(dict(facecolor='darkblue', alpha=0.7))
         yplt2.set_color('white')
         
         ax2.plot(df[xaxis], mttr, label="MTTR(Days)", color='darkblue')
-        ax2.tick_params(axis='y', labelcolor='darkblue')
+        ax2.tick_params(axis='y', labelcolor='blue')
 
         #ax1bottom, ax1top = ax1.get_ylim()
         ax2.set_ylim(bottom=0, top=500)
@@ -255,12 +262,16 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         #****************
         
         h1, l1 = ax1.get_legend_handles_labels()
-        labels_order = [1,2,0]  # Open, Closed, Open Defects
+        labels_order = [1,2,0]      # Open, Closed, Open Defects
 
         h2, l2 = ax2.get_legend_handles_labels()
 
-        ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=10, loc='upper right')
-
+        # set MTTR labels to 'blue'
+        leg = ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=8, loc='upper right')
+        for text in leg.get_texts():
+            if 'MTTR' in text.get_text():
+                text.set_color('darkblue')
+            
         #*************
         # save chart
         #*************
@@ -268,16 +279,19 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         fig.tight_layout()
          
         savefile = get_filename(kpi, xaxis_str, project_code, istest)
-        
         fig.savefig(savefile)
-        plt.close(fig)
 
         #plt.show()
 
     except Exception as e:
         
-        kpilog.error("Could not create chart for {0} {1} \n {}".format(kpi, project_code, format(str(e))))
+        kpilog.error("Could not create chart for {0} {1} - {2}".format(kpi, project_code, format(str(e))))
         return None
+    
+
+    finally:
+        if fig: plt.close(fig)
+        
 
     return savefile
 
@@ -286,6 +300,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 # Plot ATC charts 
 #-------------------------------------
 def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
+
+    fig = None
     
     kpilog.info("Plotting ATC chart for {0} {1}......".format(product, chart_key))
 
@@ -302,14 +318,14 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         # plot tests  #
         #*************#
 
-        plt.xlabel("Test Run Date (and Time)", fontsize=12)
+        plt.xlabel("Test Run Date (and Time)")
  
         if chart_key.upper() == 'MAIN':
 
             figname = 'AllTests'
             color = 'blue'
             yaxis = df["jobs_count"].values.tolist()
-            ax1.set_ylabel("ATC Tests Implemented", fontsize=12)
+            ax1.set_ylabel("ATC Tests Implemented")
 
             ax1.scatter(xaxis, yaxis, c=color, s=15, marker='o')
 
@@ -318,7 +334,7 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
             figname = '%Passes'
             color = 'green'
             yaxis = df["%passed"].values.tolist()
-            ax1.set_ylabel("% ATC Passes", fontsize=12)
+            ax1.set_ylabel("% ATC Passes")
 
             ax1.scatter(xaxis, yaxis, c=color, s=15, marker='o')
 
@@ -327,12 +343,12 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
             figname = 'Passes'
             yaxis1 = df["passed"].values.tolist()
             yaxis2 = df["jobs_count"].values.tolist()
-            ax1.set_ylabel("ATC Passes and Tests Run", fontsize=12) 
+            ax1.set_ylabel("ATC Passes and Tests Run") 
             
             ax1.scatter(xaxis, yaxis1, label='Pass', color='green', s=10, marker='o')
             ax1.scatter(xaxis, yaxis2, label='Total Run', color='blue', s=10, marker='o')
 
-            plt.legend(fontsize=10, loc='upper left')
+            plt.legend(loc='upper left')
 
 
         # set xaxis intervals
@@ -348,7 +364,6 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
          
         savefile = get_filename('ATC', figname, product, istest)
         fig.savefig(savefile)
-        plt.close(fig)
 
         #plt.show()
 
@@ -356,6 +371,11 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
 
         kpilog.error("Could not create ATC chart for {0} {1} \n {}".format(product, figname, format(str(e))))
         return None
+
+
+    finally:
+        if fig: plt.close(fig)
+        
 
     return savefile
 

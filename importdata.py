@@ -18,8 +18,8 @@ import requests
 import warnings
 
 # user defined module
+import util
 import config
-import logger
 
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -34,7 +34,7 @@ except ImportError:
     sys.exit(-1)
 
 # get log
-kpilog = logger.get_logger(config.autokpi["logname"])
+kpilog = util.get_logger(config.autokpi["logname"])
 
 
 #------------------------------------------------------------

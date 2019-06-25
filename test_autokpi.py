@@ -20,6 +20,7 @@ from datetime import datetime
 from selenium import webdriver
 
 # user defined modules
+import util
 import config
 import autokpi
 import importdata
@@ -218,7 +219,7 @@ def test_get_plot_months():
 def test_get_plot_fyqs():
 #---------------------------------------------------------
     dt = datetime.today()
-    end_dt = dataprep.get_next_date(datetime(dt.year, dt.month, 1), 2, -1) # end of next month
+    end_dt = util.get_next_date(datetime(dt.year, dt.month, 1), 2, -1) # end of next month
 
     fyq_start = config.autokpi["fyq_start"].split('/')
     start_dt_fyq = datetime(int(fyq_start[2]), int(fyq_start[1]), int(fyq_start[0]))
@@ -294,12 +295,16 @@ def test_wikiexport():
     user = config.autokpi["auth"]["user"]
     pwd = config.autokpi["auth"]["password"]
 
-    # check url is valid
-    browser = wikiexport.get_wikipage(url)
-    assert not browser is None
+    try:
 
-    # check auth credentials are valid
-    assert wikiexport.log_into_wiki(browser, user, pwd) == True
+        # check url is valid
+        browser = wikiexport.get_wikipage(url)
+        assert not browser is None
+        
+        # check auth credentials are valid
+        assert wikiexport.log_into_wiki(browser, user, pwd) == True
 
-    browser.quit()
+    finally:
+        
+        browser.quit()
     

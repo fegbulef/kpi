@@ -27,43 +27,42 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
 # user defined module
+import util
 import config   
-import logger
 
-kpilog = logger.get_logger(config.autokpi["logname"])
-
+kpilog = util.get_logger(config.autokpi["logname"])
 
 
-#------------------------------------------------------------------------
-# Return a date given start date and number of months and/or days to add 
-# - returns date 
-#------------------------------------------------------------------------
-def get_next_date(dt, months, days):
-    next_dt = dt
-    
-    if abs(months) != 0:
-        next_dt += relativedelta(months=months)
-    if abs(days) != 0:
-        next_dt += relativedelta(days=days)
-
-    return next_dt
-
-
-#----------------------------------------------------------------------------
-# Calculate start/end dates of a given month in MMM-YY format
-# - returns start date (end of prev. month), end date (end of current month) 
-#----------------------------------------------------------------------------
-def get_month_start_end(month):
-
-    month_dt_str = '-'.join(['1', month[:3], month[4:]]) 
-    month_dt = pd.to_datetime(month_dt_str, format="%d-%b-%y")
-                
-    month_start = get_next_date(month_dt, 0, -1).date()    # end of previous month
-    month_end = get_next_date(month_dt, 1, -1).date()      # end current month
-
-    return month_start, month_end
-
-            
+###------------------------------------------------------------------------
+### Return a date given start date and number of months and/or days to add 
+### - returns date 
+###------------------------------------------------------------------------
+##def get_next_date(dt, months, days):
+##    next_dt = dt
+##    
+##    if abs(months) != 0:
+##        next_dt += relativedelta(months=months)
+##    if abs(days) != 0:
+##        next_dt += relativedelta(days=days)
+##
+##    return next_dt
+##
+##
+###----------------------------------------------------------------------------
+### Calculate start/end dates of a given month in MMM-YY format
+### - returns start date (end of prev. month), end date (end of current month) 
+###----------------------------------------------------------------------------
+##def get_month_start_end(month):
+##
+##    month_dt_str = '-'.join(['1', month[:3], month[4:]]) 
+##    month_dt = pd.to_datetime(month_dt_str, format="%d-%b-%y")
+##                
+##    month_start = get_next_date(month_dt, 0, -1).date()    # end of previous month
+##    month_end = get_next_date(month_dt, 1, -1).date()      # end current month
+##
+##    return month_start, month_end
+##
+##            
 #-----------------------------------------------
 # Get month range from dates
 # - returns DataFrame structure 
@@ -115,7 +114,7 @@ def get_plot_fyqs(start_dt, end_dt):
 
     if qtrs > 0:
         months_to_add = 3 * (qtrs if qtrs >= 1 else 1)
-        start_dt = get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
+        start_dt = util.get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
         
     fyq_df = get_plot_months(start_dt, end_dt)
 
@@ -199,7 +198,7 @@ def get_mttr_days(df, months_fyq_df, toolcfg):
         for j in months_fyq_df.index:
             daysopen = 0
             
-            month_start, month_end = get_month_start_end(months_fyq_df.Months[j])
+            month_start, month_end = util.get_month_start_end(months_fyq_df.Months[j])
             
             if (dt_open > month_end) or (dt_closed <= month_start): continue
            
@@ -242,7 +241,7 @@ def get_mttr_calcs(df):
         data = df[df.Months == df.Months[i]]
         if data.empty: continue
 
-        month_start, month_end = get_month_start_end(data.iloc[0].Months)
+        month_start, month_end = util.get_month_start_end(data.iloc[0].Months)
 
         # sum values rolling forward
         days += (month_end - month_start).days
@@ -252,7 +251,7 @@ def get_mttr_calcs(df):
         # remove calculations of 4th month after each 3 month period
         if i > 2:
             dfx = df.iloc[i-3]
-            start, end = get_month_start_end(dfx.loc["Months"])
+            start, end = util.get_month_start_end(dfx.loc["Months"])
             days -= (end - start).days
             closed_cnt -= dfx.loc["ClosedCnt"]
             mttr -= dfx.loc["MTTR"]
@@ -476,7 +475,7 @@ def get_atc_plot_data(df, toolcfg):
     # filter data by rundate
     end_dt = date.today()
     mth_filter = config.autokpi["months_to_plot"]
-    start_dt = get_next_date(datetime(end_dt.year, end_dt.month, 1), mth_filter, 0)
+    start_dt = util.get_next_date(datetime(end_dt.year, end_dt.month, 1), mth_filter, 0)
 
     end_dt = pd.to_datetime(end_dt, format="%Y-%m-%d")          # put dates in right format to 
     start_dt = pd.to_datetime(start_dt, format="%Y-%m-%d")      # compare with dataframe dates

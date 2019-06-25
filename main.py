@@ -16,8 +16,8 @@ import time
 import argparse
 
 # user defined modules
+import util
 import config
-import logger
 import autokpi  
 
 
@@ -25,7 +25,7 @@ import autokpi
 #   M A I N   #
 #*************#
 
-kpilog = logger.setup_logger(config.autokpi["logname"], config.autokpi["logfile"])
+kpilog = util.setup_logger(config.autokpi["logname"], config.autokpi["logfile"])
 kpilog.info("Starting AutoKPI run.....")
 
 parser = argparse.ArgumentParser()

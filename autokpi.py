@@ -19,13 +19,13 @@ import logging
 from datetime import datetime, date
 
 # user defined modules
+import util
 import config
-import logger
 import importdata  
 import dataprep    
 import plotkpi      
 
-kpilog = logger.get_logger(config.autokpi["logname"])
+kpilog = util.get_logger(config.autokpi["logname"])
 
 
 #-------------------------------------------------------------
@@ -150,10 +150,10 @@ def run_autokpi(kpi_dict, importfromxl):
 
     # Setup dates for filters and for plotting
     dt = date.today()
-    end_dt = dataprep.get_next_date(datetime(dt.year, dt.month, 1), 2, -1)   # end of next month
+    end_dt = util.get_next_date(datetime(dt.year, dt.month, 1), 2, -1)   # end of next month
     
     filter_mth = config.autokpi["months_to_plot"]
-    start_dt = dataprep.get_next_date(datetime(dt.year, dt.month, 1), filter_mth, 0)
+    start_dt = util.get_next_date(datetime(dt.year, dt.month, 1), filter_mth, 0)
     months_to_plot_df = dataprep.get_plot_months(start_dt, end_dt)
 
     fyq_start = config.autokpi["fyq_start"].split('/')
