@@ -181,7 +181,7 @@ def get_jira_client(toolcfg, user, pwd, kpi):
     except JIRAError as e:
         kpilog.error("JIRA API ERROR - {0}".format(api_status_code_desc(e.status_code)))
 
-    kpilog.info("JIRA Connection Status: OK\n")
+    kpilog.info("JIRA Connection Status: OK")
     
     return jra
 

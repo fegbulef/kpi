@@ -33,92 +33,28 @@ import config
 kpilog = util.get_logger(config.autokpi["logname"])
 
 
-###------------------------------------------------------------------------
-### Return a date given start date and number of months and/or days to add 
-### - returns date 
-###------------------------------------------------------------------------
-##def get_next_date(dt, months, days):
-##    next_dt = dt
-##    
-##    if abs(months) != 0:
-##        next_dt += relativedelta(months=months)
-##    if abs(days) != 0:
-##        next_dt += relativedelta(days=days)
-##
-##    return next_dt
-##
-##
-###----------------------------------------------------------------------------
-### Calculate start/end dates of a given month in MMM-YY format
-### - returns start date (end of prev. month), end date (end of current month) 
-###----------------------------------------------------------------------------
-##def get_month_start_end(month):
-##
-##    month_dt_str = '-'.join(['1', month[:3], month[4:]]) 
-##    month_dt = pd.to_datetime(month_dt_str, format="%d-%b-%y")
-##                
-##    month_start = get_next_date(month_dt, 0, -1).date()    # end of previous month
-##    month_end = get_next_date(month_dt, 1, -1).date()      # end current month
-##
-##    return month_start, month_end
-##
-##            
+
 #-----------------------------------------------
-# Get month range from dates
+# Create structure to hold plot months
 # - returns DataFrame structure 
 #-----------------------------------------------
 def get_plot_months(start_dt, end_dt):
 
-    months = np.arange(start_dt, end_dt, np.timedelta64(1, 'M'), dtype='datetime64[M]')
-    months_df = pd.DataFrame(months, columns=["Months"])
-    months_df = months_df["Months"].dt.strftime("%b-%y")    # format: MMM-YY
-
-    # setup financial quarter for each month
-    fyq = ['']* len(months_df)
+    months_list = util.get_kpi_months(start_dt, end_dt)
     
-    for i, month in months_df.items():
-        mth, yr = month.split('-')      # into MMM and YY
-        
-        for qtr, qtr_months in config.autokpi["fyq"].items():
-            if mth.upper() in qtr_months:
-                int_yr = int(yr)
-            
-                if qtr == 'Q1' or (qtr == 'Q2' and mth.upper() != 'JAN'):
-                    int_yr += 1
+    # get corresponding fyq for each month
+    fyq = util.get_month_fyq(months_list)
+ 
+    #df = months_df.to_frame()
+    months_df = pd.DataFrame(months_list, columns=["Months"])
+    months_df = months_df.assign(FYQ=fyq)
 
-                fyq_str = str.join('', ['FY', str(int_yr), ' ', qtr])
-                fyq[i] = fyq_str
-                break
-
-    df = months_df.to_frame()
-    months_df = df.assign(FYQ=fyq)
+    months_df.reset_index(inplace=True)
 
     if 'index' in months_df.columns:
         months_df.drop('index', axis=1, inplace=True)    # index column created by assign
 
     return months_df
-
-
-#-----------------------------------------------
-# Get FYQ range from dates
-# - returns DataFrame structure 
-#-----------------------------------------------
-def get_plot_fyqs(start_dt, end_dt):
-
-    max_fyq = config.autokpi["fyqs_to_plot"]
-
-    # work out number of fyqs between start and end dates
-    t = relativedelta(end_dt, start_dt)
-    t_mths = (t.years*12) + t.months
-    qtrs = (t_mths/3) - max_fyq
-
-    if qtrs > 0:
-        months_to_add = 3 * (qtrs if qtrs >= 1 else 1)
-        start_dt = util.get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
-        
-    fyq_df = get_plot_months(start_dt, end_dt)
-
-    return fyq_df
 
 
 #--------------------------------------------------

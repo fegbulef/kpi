@@ -151,14 +151,11 @@ def run_autokpi(kpi_dict, importfromxl):
     # Setup dates for filters and for plotting
     dt = date.today()
     end_dt = util.get_next_date(datetime(dt.year, dt.month, 1), 2, -1)   # end of next month
-    
-    filter_mth = config.autokpi["months_to_plot"]
-    start_dt = util.get_next_date(datetime(dt.year, dt.month, 1), filter_mth, 0)
-    months_to_plot_df = dataprep.get_plot_months(start_dt, end_dt)
 
-    fyq_start = config.autokpi["fyq_start"].split('/')
-    start_dt_fyq = datetime(int(fyq_start[2]), int(fyq_start[1]), int(fyq_start[0]))
-    months_fyq_df = dataprep.get_plot_fyqs(start_dt_fyq, end_dt)
+    months_to_plot_df = dataprep.get_plot_months(None, end_dt)
+
+    fyq_start, fyq_end = util.get_kpi_fyq_start_end(None, end_dt)
+    months_fyq_df = dataprep.get_plot_months(fyq_start, fyq_end)
 
     # Process each tool/kpi combination
     for tool, kpis in kpi_dict.items():

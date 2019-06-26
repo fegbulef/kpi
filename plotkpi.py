@@ -58,24 +58,28 @@ def setup_plot(kpi, chart_title, xlim):
     # create plot
     fig, ax1 = plt.subplots(figsize=(8,5))
 
-    ax1.yaxis.grid('on', which='major', linestyle='--', alpha=0.5)
-    
+    if kpi == 'ATC':
+        ax1.grid(True, which='major', axis='both', linestyle='--', alpha=0.5)
+        #ax1.yaxis.grid('on', which='major', linestyle='--', alpha=0.5)
+        ax1.spines['right'].set_visible(False)
+        
+    else:
+        ax1.grid(True, which='major', axis='y', linestyle='--', alpha=0.5)
+        plt.xlim(-0.7, xlim)
+
+    ax1.spines['top'].set_visible(False)
+
      # set custom fonts and label sizes
     custom_font = get_custom_font()
 
     #if kpi == 'ATC':
     #    plt.title(chart_title, color='black', fontproperties=fontproperties)
-        
-    #plt.rcParams['font.family'] = customfont.get_name()
+
     ax1.xaxis.get_label().set_fontproperties(custom_font)
     ax1.yaxis.get_label().set_fontproperties(custom_font)
 
     for label in (ax1.get_xticklabels() + ax1.get_yticklabels()):
-        label.set_fontproperties(custom_font)
-
-    if not kpi == 'ATC':
-        plt.xlim(-0.7, xlim)
-
+        label.set_fontproperties(custom_font)    
         
     return plt, fig, ax1
 
@@ -217,18 +221,21 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         ax1.set_xticklabels(df[xaxis], rotation=90)
         
         # format yaxis
-        ax1.set_ylim(bottom=0)
-
-        ax1bottom, ax1top = ax1.get_ylim()
-        if ax1top <= 10:
+        yticks = ax1.get_yticks().tolist()
+        maxy = max(yticks)
+       
+        ax1.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
+        if maxy <= 10:
+            maxy = round(maxy)
             ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
-        else:
-            ax1.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
-            for t in ax1.yaxis.get_majorticklabels():
-                if t == 0:
-                    t.set_visible(False)
 
+        ax1.set_ylim(bottom=0, top=maxy)
+ 
+        for t in ax1.yaxis.get_majorticklabels():
+            if t == 0:
+                t.set_visible(False)
 
+                
         #**********************
         # plot OpenDefects
         #**********************
@@ -237,9 +244,10 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         #****************
         # plot MTTR
-        #****************
+           #****************
 
         ax2 = ax1.twinx()
+        ax2.spines['top'].set_visible(False)
 
         yplt2 = plt.ylabel("MTTR(days)")
         yplt2.set_bbox(dict(facecolor='darkblue', alpha=0.7))
@@ -248,8 +256,21 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         ax2.plot(df[xaxis], mttr, label="MTTR(Days)", color='darkblue')
         ax2.tick_params(axis='y', labelcolor='blue')
 
-        #ax1bottom, ax1top = ax1.get_ylim()
-        ax2.set_ylim(bottom=0, top=500)
+        # calibrate MTTR plot
+        yticks = ax2.get_yticks().tolist()
+        maxy = max(yticks)
+
+        ax2.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
+        if maxy <= 10:
+            maxy = 10
+            ax2.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+        ax2.set_ylim(bottom=0, top=maxy)
+ 
+        for t in ax2.yaxis.get_majorticklabels():
+            if t == 0:
+                t.set_visible(False)
+                
 
         #*********************
         # plot MTTR target
@@ -307,12 +328,10 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
 
     try:
 
-        max_xlim = df["rundate_int"].max()
-
         index = df.index.values
         xaxis = df["rundate_int"].values.tolist()
 
-        plt, fig, ax1 = setup_plot('ATC', chart_title, max_xlim)  
+        plt, fig, ax1 = setup_plot('ATC', chart_title, xaxis[-1])  
 
         #*************#
         # plot tests  #
@@ -356,9 +375,14 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         ax1.set_xlim(xaxis[0], xaxis[-1]+1)
         ax1.xaxis.set_major_locator(ticker.MultipleLocator(interval))
 
-        # change labels to dates
+        # change xaxis labels to dates
         xlabels = get_xtick_labels(ax1)
         ax1.set_xticklabels(xlabels, rotation=90)
+
+        # format y axis
+        yticks = ax1.get_yticks().tolist()
+        maxy = max(yticks)
+        ax1.set_ylim(bottom=0, top=maxy)
 
         fig.tight_layout()
          
@@ -369,7 +393,7 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
 
     except Exception as e:
 
-        kpilog.error("Could not create ATC chart for {0} {1} \n {}".format(product, figname, format(str(e))))
+        kpilog.error("Could not create ATC chart for {0} - {1}".format(product, format(str(e))))
         return None
 
 

@@ -7,16 +7,21 @@ Created date: 25 June 2019
 
 Description:  Generic script to store common modules:
 
-              - setup_logger (logname, logfile)
-              - get_logger (logname)
-              - get_next_date (date, months, days)
-              - get_month_start_end (month)
+              - get_next_date(date, +/-monthstoadd, +/-daystoadd)
+              - get_month_start_end(monthyear)
+              - get_kpi_months(start_dt, end_dt)
+              - get_kpi_fyq_start_end(start_dt, end_dt)
+              - get_month_fyq(months_df)
+              - setup_logger(logname, logfile)
+              - get_logger(logname)
 
 *******************************************************************************"""
 
 import os
 import time
 import logging
+
+import config   # user defined
 
 try:
     import numpy as np
@@ -26,7 +31,41 @@ except ImportError:
     print("Please install the python 'pandas' and 'xlrd' modules")
     sys.exit(-1)
 
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+
+
+###-------------------------------------------------------------
+### Parse kpi list and return tool with selected kpi codes
+### - returns tool/kpi (dict) 
+###-------------------------------------------------------------
+##def get_kpi_codes(kpi_list):
+##
+##    out_kpi = {}
+##    tooldict = config.autokpi["tools"]
+##
+##    for code in kpi_list:
+##        if code in out_kpi.keys(): continue
+##
+##        # tool selected - add tool and all associated kpi codes
+##        if code in tooldict:
+##            out_kpi[code] = []      
+##            for k in tooldict[code]["kpi"].keys():      
+##                out_kpi[code].append(k)
+##
+##        # kpi code input - get associated tool and add kpi
+##        else:      
+##            for tool in tooldict:
+##                 if code in tooldict[tool]["kpi"].keys():
+##                    if out_kpi.get(tool):
+##                        if not code in out_kpi[tool]:   # kpi already saved
+##                            out_kpi[tool].append(code)
+##                    else:
+##                        out_kpi[tool] = []
+##                        out_kpi[tool].append(code)
+##                    break
+##    
+##    return out_kpi
 
 
 #------------------------------------------------------------------------
@@ -59,6 +98,88 @@ def get_month_start_end(month):
     return month_start, month_end
 
 
+#----------------------------------------------------------------------------
+# Get range of months (dates) for given start/end dates
+# - returns list (dates) 
+#----------------------------------------------------------------------------
+def get_kpi_months(start_dt, end_dt):
+
+    if end_dt is None:      # default to end of next month
+        dt = date.today()
+        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 2, -1)
+    
+    if start_dt is None:    # default from config
+        filter_mth = config.autokpi["months_to_plot"]
+        start_dt = get_next_date(datetime(end_dt.year, end_dt.month, 1), filter_mth, 0)
+
+    months = np.arange(start_dt, end_dt, np.timedelta64(1, 'M'), dtype='datetime64[M]')    
+
+    # convert to df and reformat: MMM-YY
+    months_df = pd.DataFrame(months, columns=["Months"])
+    months_df["Months"] = pd.to_datetime(months_df["Months"]).dt.strftime("%b-%y")  
+
+    return months_df.values.tolist()
+
+    
+#----------------------------------------------------------------------------
+# Get start end of FYQs to plot
+# - returns start_fyq, end_fyq 
+#----------------------------------------------------------------------------
+def get_kpi_fyq_start_end(start_dt, end_dt):
+
+    if end_dt is None:      # default to end of next month
+        dt = date.today()
+        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 2, -1)
+
+    if start_dt is None:    # default from config
+        fyq_start = config.autokpi["fyq_start"].split('/')
+        start_dt = datetime(int(fyq_start[2]), int(fyq_start[1]), int(fyq_start[0]))
+
+    max_fyq = config.autokpi["fyqs_to_plot"]
+
+    # work out number of fyqs between start and end dates
+    t = relativedelta(end_dt, start_dt)
+    t_mths = (t.years*12) + t.months
+    qtrs = (t_mths/3) - max_fyq
+
+    if qtrs > 0:
+        months_to_add = 3 * (qtrs if qtrs >= 1 else 1)
+        start_dt = util.get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
+
+
+    return start_dt, end_dt
+
+
+#----------------------------------------------------------------------------
+# Setup financial quarter for each corresponding month
+# - returns list (FYQs) 
+#----------------------------------------------------------------------------
+def get_month_fyq(months):
+
+    fyq = ['']* len(months)
+    
+    for i, month in enumerate(months):
+        
+        # separate string into MMM and YY
+        if isinstance(month, list):     # converted from df.values 
+            mth, yr = month[0][:3], month[0][4:]    
+        else:
+            mth, yr = month.split('-')      
+        
+        for qtr, qtr_months in config.autokpi["fyq"].items():
+            if mth.upper() in qtr_months:
+                int_yr = int(yr)
+            
+                if qtr == 'Q1' or (qtr == 'Q2' and mth.upper() != 'JAN'):
+                    int_yr += 1
+
+                fyq_str = str.join('', ['FY', str(int_yr), ' ', qtr])
+                fyq[i] = fyq_str
+                break
+            
+    return fyq
+
+
 #-------------------------------------------------------------
 # Get logger
 # - returns log handler 
@@ -77,8 +198,11 @@ def setup_logger(logname, logfile):
     # delete existing log file
     log = os.path.join(os.getcwd(), logfile)
     if os.path.exists(log):
-        os.remove(log)
-        time.sleep(1)
+        try:
+            os.remove(log)
+            time.sleep(2)
+        except Exception as e:
+            print("WARNING - Could not delete {}; Log will be appended.".format(logfile))
 
     # setup log file
     logger = logging.getLogger(logname)

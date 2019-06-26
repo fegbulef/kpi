@@ -218,12 +218,13 @@ def test_get_plot_months():
 #@pytest.mark.skip(reason="Tested")
 def test_get_plot_fyqs():
 #---------------------------------------------------------
+    start_dt = None
+
     dt = datetime.today()
     end_dt = util.get_next_date(datetime(dt.year, dt.month, 1), 2, -1) # end of next month
 
-    fyq_start = config.autokpi["fyq_start"].split('/')
-    start_dt_fyq = datetime(int(fyq_start[2]), int(fyq_start[1]), int(fyq_start[0]))
-    fyq_df = dataprep.get_plot_fyqs(start_dt_fyq, end_dt)
+    fyq_start, fyq_end = util.get_kpi_fyq_start_end(start_dt, end_dt)
+    fyq_df = dataprep.get_plot_months(fyq_start, fyq_end)
     
     if isinstance(fyq_df, pd.DataFrame):
         assert 'FYQ' in fyq_df.columns.values.tolist()
