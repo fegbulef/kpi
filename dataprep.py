@@ -40,13 +40,13 @@ kpilog = util.get_logger(config.autokpi["logname"])
 #-----------------------------------------------
 def get_plot_months(start_dt, end_dt):
 
-    months_list = util.get_kpi_months(start_dt, end_dt)
+    months = util.get_kpi_months(start_dt, end_dt)
     
     # get corresponding fyq for each month
-    fyq = util.get_month_fyq(months_list)
+    fyq = util.get_month_fyq(months)
  
     #df = months_df.to_frame()
-    months_df = pd.DataFrame(months_list, columns=["Months"])
+    months_df = pd.DataFrame(months, columns=["Months"])
     months_df = months_df.assign(FYQ=fyq)
 
     months_df.reset_index(inplace=True)

@@ -36,7 +36,7 @@ parser.add_argument("-fromxl", type=str, help="Import data from Excel? Y/N")
 args = parser.parse_args()
 
 importfromxl = False
-kpi_list = args.kpi.split(',')
+kpi_list = args.kpi.upper().split(',')
 kpi_dict = autokpi.get_kpi_codes(kpi_list)
     
 # Validate - kpi is required

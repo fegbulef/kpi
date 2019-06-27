@@ -35,39 +35,6 @@ from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
 
-###-------------------------------------------------------------
-### Parse kpi list and return tool with selected kpi codes
-### - returns tool/kpi (dict) 
-###-------------------------------------------------------------
-##def get_kpi_codes(kpi_list):
-##
-##    out_kpi = {}
-##    tooldict = config.autokpi["tools"]
-##
-##    for code in kpi_list:
-##        if code in out_kpi.keys(): continue
-##
-##        # tool selected - add tool and all associated kpi codes
-##        if code in tooldict:
-##            out_kpi[code] = []      
-##            for k in tooldict[code]["kpi"].keys():      
-##                out_kpi[code].append(k)
-##
-##        # kpi code input - get associated tool and add kpi
-##        else:      
-##            for tool in tooldict:
-##                 if code in tooldict[tool]["kpi"].keys():
-##                    if out_kpi.get(tool):
-##                        if not code in out_kpi[tool]:   # kpi already saved
-##                            out_kpi[tool].append(code)
-##                    else:
-##                        out_kpi[tool] = []
-##                        out_kpi[tool].append(code)
-##                    break
-##    
-##    return out_kpi
-
-
 #------------------------------------------------------------------------
 # Return a date given start date and number of months and/or days to add 
 # - returns date 
@@ -116,9 +83,11 @@ def get_kpi_months(start_dt, end_dt):
 
     # convert to df and reformat: MMM-YY
     months_df = pd.DataFrame(months, columns=["Months"])
-    months_df["Months"] = pd.to_datetime(months_df["Months"]).dt.strftime("%b-%y")  
+    months_df["Months"] = pd.to_datetime(months_df["Months"]).dt.strftime("%b-%y")
 
-    return months_df.values.tolist()
+    months = [m[0] for m in months_df.values.tolist()]
+
+    return months
 
     
 #----------------------------------------------------------------------------
@@ -160,11 +129,7 @@ def get_month_fyq(months):
     
     for i, month in enumerate(months):
         
-        # separate string into MMM and YY
-        if isinstance(month, list):     # converted from df.values 
-            mth, yr = month[0][:3], month[0][4:]    
-        else:
-            mth, yr = month.split('-')      
+        mth, yr = month.split('-')      # separate into MMM and YY 
         
         for qtr, qtr_months in config.autokpi["fyq"].items():
             if mth.upper() in qtr_months:
