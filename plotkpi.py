@@ -212,7 +212,11 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
                         alpha=opacity, color='green',
                         label=axclosed)
 
-        yplt1 = plt.ylabel("Defects")
+        if kpi == 'PSIRT':
+            yplt1 = plt.ylabel("PSIRT Defects")
+        else:
+            yplt1 = plt.ylabel("Defects")
+            
         yplt1.set_bbox(dict(facecolor='black', alpha=0.7))
         yplt1.set_color('white')
 
@@ -249,11 +253,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         ax2 = ax1.twinx()
         ax2.spines['top'].set_visible(False)
 
-        if kpi == 'PSIRT':
-            yplt2 = plt.ylabel("PSIRT MTTR(days)")
-        else:
-            yplt2 = plt.ylabel("MTTR(days)")
-            
+        yplt2 = plt.ylabel("MTTR(days)")
         yplt2.set_bbox(dict(facecolor='darkblue', alpha=0.7))
         yplt2.set_color('white')
         

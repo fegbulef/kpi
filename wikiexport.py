@@ -12,23 +12,18 @@ Description:  Export KPI charts to Confluence (Wiki) page
 import os
 import sys
 import time
-import win32clipboard
 
+import util   # user defined
 import config # user defined
-import logger # uerr defined
 
-from shutil import copyfile
-
-from PIL import Image
-from io import BytesIO
+from datetime import datetime
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait 
 from selenium.webdriver.common.action_chains import ActionChains
 
 # setup log
-kpilog = logger.get_logger(config.autokpi["logname"])
+wikilog = util.setup_logger("wikilog", "wikilog.log")
 
 
 #-----------------------------------------------
@@ -50,14 +45,12 @@ def start_browser():
 #-----------------------------------------------
 def get_wikipage(url):
 
-    try:
-                           
+    try:                       
         browser = start_browser()
         browser.get(url)
 
-    except Exception as e:
-                           
-        kpilog.error("Unable to access Confluence: {}".format(str(e)))
+    except Exception as e:                         
+        wikilog.error("Unable to access Confluence: {}".format(str(e)))
         if browser:
             browser.quit()
             
@@ -76,7 +69,7 @@ def log_into_wiki(browser, auth_user, auth_pwd):
         return True
 
     try:
-        # access login boxes
+        # access login elements
         username_txt = browser.find_element_by_name("os_username")
         password_txt = browser.find_element_by_name("os_password")
         login_btn = browser.find_element_by_name("login")
@@ -93,181 +86,273 @@ def log_into_wiki(browser, auth_user, auth_pwd):
         
         if loggedin:
             if "KPI" in loggedin.get_attribute("content"):
-                kpilog.info("User {0} Login: OK".format(auth_user))
+                wikilog.info("User {0} Login: OK".format(auth_user))
                 return True
+            
             else:
-                kpilog.error("Unable to access Confluence; Check user credentials")
+                wikilog.error("Unable to access Confluence; Check user credentials")
+                
             
     except Exception as e:
-        kpilog.error("Unable to access Confluence {}".format(str(e)))
-
+        wikilog.error("Unable to access Confluence {}".format(str(e)))
 
     return False
 
 
 #-------------------------------------------------------------
-# Copy chart to clipboard
-# - returns True/False (image sent to clipboard)
+# Get partial link text from config 
+# - returns dict (kpi: wikilink text)  
 #-------------------------------------------------------------
-def copy_chart_to_clipboard(chartpath):
+def get_config_linktext():
 
-    kpilog.debug("...copy saved chart to clipboard")
+    kpilinks = {}
+    
+    for tool in config.autokpi["tools"]:
+        kpis = config.autokpi["tools"][tool]["kpi"]
+        for kpi in kpis:
+            kpilinks[kpi] = kpis[kpi]["wikitext"]
+            
+    return kpilinks
+
+
+#--------------------------------------------------------------------------
+# Construct line of text for the current run 
+# - returns strings: monthly_run_desc, quarterly_run_desc, last_run_month
+#--------------------------------------------------------------------------
+def get_kpi_text_update():
+
+    # construct 'by month' text 
+    months = util.get_kpi_months(None, None)                    # default to current run months
+
+    firstmth = datetime.strptime(months[0], "%b-%y")
+    firstdt = firstmth.strftime("%B %Y")
+    lastmth = datetime.strptime(months[-1], "%b-%y")
+    lastdt = lastmth.strftime("%B %Y") 
+        
+    by_month_text = ' '.join(['from', firstdt, 'to', lastdt])
+
+    # construct 'by fyq' text
+    start_dt, end_dt = util.get_kpi_fyq_start_end(None, None) # default to current run dates
+    months = util.get_kpi_months(start_dt, end_dt)
+    fyq = util.get_month_fyq(months)
+    
+    first_fyq, last_fyq = fyq[0], fyq[-1]
+
+    by_fyq_text = ' '.join(['from', first_fyq, 'to', last_fyq])
+    
+        
+    return by_month_text, by_fyq_text, lastdt
+
+
+
+#-------------------------------------------------------------
+# For given kpi/link, parse HTML images and update 
+# - returns True/False (images updated)  
+#-------------------------------------------------------------
+def navigate_to_kpi(browser, linktext, wikitype):
 
     try:
-        # open chart
-        output = BytesIO()
-        image = Image.open(chartpath)
-        image.convert("RGB").save(output, "BMP")
-        data = output.getvalue()[14:]       # .bmp header is 14 bytes
-        output.close()
+        kpipage = None
+        
+        # go to kpi page link
+        linkpages = browser.find_elements_by_partial_link_text(linktext)
 
-        # paste into clipboard
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
-        win32clipboard.CloseClipboard()
+        for linkpage in linkpages:
+            if wikitype == 'Test' and not linkpage.text[:4] == 'Test' \
+               or linkpage.text[:4] == 'Test' and not wikitype == 'Test':
+                continue
 
-        return True
+            kpipage = linkpage
+            wikilog.info("Navigate to {} ....".format(kpipage.text))    
 
+            browser.execute_script("arguments[0].click();", kpipage)    # click link
+            time.sleep(3)
+            break
+            
+        # validate page details
+        if not kpipage or not linktext in browser.title:
+            wikilog.error("Unable to navigate to {}".format(linktext))
+            return False
+        
     except Exception as e:
-        kpilog.error("Exception: {}".format(str(e)))
+        wikilog.error("Unable to navigate to {0}: {1}".format(linktext, str(e)))
+        return False
 
-    return False
 
-   
+    return True
+
+    
 #-------------------------------------------------------------
 # Get full path name of chart to replace image 
 # - returns string (full path of chart)
 #-------------------------------------------------------------
-def get_chart(img_name):
+def get_kpifile(kpi, img_name):
 
-    chartpath = None
+    kpifile = None
 
     # access folder of saved charts
     cwd = os.getcwd()
-    chartfiles = os.path.join(cwd, config.autokpi["savedir"])
+    kpisavedir = os.path.join(cwd, config.autokpi["savedir"])
 
-    for chart in os.listdir(chartfiles):
+    for file in os.listdir(kpisavedir):
+        if not kpi in file: continue
         
-        if (img_name == "CMSA-Month.PNG" and chart == "CFPD_AllMonths.png") \
-           or (img_name == "All-CFDs-Month.PNG" and chart == "AllCFD_AllMonths.png") \
-           or (img_name == "CMSAM-PSIRT.PNG" and chart == "PSIRT_AllMonths.png"):
-    
-            chartpath = os.path.join(chartfiles, chart)
-            kpilog.debug("Chart exists: {}".format(chartpath))
+        if (img_name in ["CMSA-Month.PNG", file] and file == "CFPD_AllMonths.png") \
+           or (img_name in ["CMSA-Quarter.PNG", file] and file == "CFPD_AllFYQ.png") \
+           or (img_name in ["CMS-Month.PNG", file] and file == "CFPD_CMS_Months.png") \
+           or (img_name in ["CMS-Quarter.PNG", file] and file == "CFPD_CMS_FYQ.png") \
+           or (img_name in ["CMA-Month.PNG", file] and file == "CFPD_CMA_Months.png") \
+           or (img_name in ["CMA-Quarter.PNG", file] and file == "CFPD_CMA_FYQ.png") \
+           or (img_name in ["All-CFDs-Month.PNG", file] and file == "AllCFD_AllMonths.png") \
+           or (img_name in ["All-CFDs-Qtr.PNG", file] and file == "AllCFD_AllFYQ.png") \
+           or (img_name in ["CMS-CFDs-Month.PNG", file] and file == "AllCFD_CMS_Months.png") \
+           or (img_name in ["CMS-CFDs-Qtr.PNG", file] and file == "AllCFD_CMS_FYQ.png") \
+           or (img_name in ["CMA-CFDs-Month.PNG", file] and file == "AllCFD_CMA_Months.png") \
+           or (img_name in ["CMA-CFDs-Qtr.PNG", file] and file == "AllCFD_CMA_FYQ.png") \
+           or (img_name in ["CMM-CFDs-Month.PNG", file] and file == "AllCFD_CMM_Months.png") \
+           or (img_name in ["CMM-CFDs-Qtr.PNG", file] and file == "AllCFD_CMM_FYQs.png") \
+           or (img_name in ["CMSAM-PSIRT.PNG", file] and file == "PSIRT_AllMonths.png") \
+           or (img_name in ["CMS-PSIRT.PNG", file] and file == "PSIRT_CMS_Months.png") \
+           or (img_name in ["CMA-PSIRT.PNG", file] and file == "PSIRT_CMA_Months.png") \
+           or (img_name in ["CMM-PSIRT.PNG", file] and file == "PSIRT_CMM_Months.png") \
+           or (img_name in ["All-Month.PNG", file] and file == "IFD_AllMonths.png") \
+           or (img_name in ["All-Qtr.PNG", file] and file == "IFD_AllFYQ.png") \
+           or (img_name in ["CMS-IFD-Month.PNG", file] and file == "IFD_CMS_Months.png") \
+           or (img_name in ["CMS-IFD-Qtr.PNG", file] and file == "IFD_CMS_FYQ.png") \
+           or (img_name in ["CMA-IFD-Month.PNG", file] and file == "IFD_CMA_Months.png") \
+           or (img_name in ["CMA-IFD-Qtr.PNG", file] and file == "IFD_CMA_FYQ.png") \
+           or (img_name in ["CMM-IFD-Month.PNG", file] and file == "IFD_CMM_Months.png") \
+           or (img_name in ["CMM-IFD-Qtr.PNG", file] and file == "IFD_CMM_FYQ.png"):
+           
+            kpifile = os.path.join(kpisavedir, file).replace('\\', '\\\\')  # escape backslashes
+            wikilog.debug("Chart exists: {}".format(kpifile))
                            
             break
         
-    return chartpath
+    return kpifile
 
 
 #-------------------------------------------------------------
-# Update image width, height and title 
-# - returns None  
+# Find all images on the page and link to corresponding kpi
+# - returns dict (image: new kpi)
 #-------------------------------------------------------------
-def update_image_title(browser, img_id, img_name, frame):
+def get_image_kpis(browser, kpi):     
 
-    kpilog.debug("...reselect image and update image title")
-
-    css_selector = ''.join(['img[data-linked-resource-id="', img_id, '"]'])
-    element = browser.find_element_by_css_selector(css_selector)
-    # bring image to view
-    browser.execute_script("return arguments[0].scrollIntoView(true);", element)
-
-    actions = ActionChains(browser)
-    actions.move_to_element(element).click(element).perform()                
-    time.sleep(3)
-
-    browser.switch_to.parent_frame()
-
-    # click on 'Properties' menu button
-    xpath = "//div[@class='panel-buttons']/a[contains(@class, 'properties')]/span[@class='panel-button-text']"
-    prop_menu = browser.find_element_by_xpath(xpath)
-    prop_menu.click()               
-    time.sleep(3)
-
-    # 'Title' link
-    title_link = browser.find_element_by_xpath("//*[@id='image-attributes']")
-    title_link.click()
-    time.sleep(3)
-
-    # set 'Title text'
-    title = browser.find_element_by_xpath("//*[@id='image-title-attribute']")
-    title.clear()
-
-    if title.text:
-        title.send_keys(Keys.CONTROL + 'a')
-        title.send_keys(Keys.DELETE)
-
-    time.sleep(2)
-    title.send_keys(img_name)       # set as image name
-    time.sleep(3)
-
-    # Save changes
-    savebtn = browser.find_element_by_xpath("//button[text()='Save']")
-    savebtn.click()
-    time.sleep(3)
+    img_kpi = {}
     
-    browser.switch_to.frame(frame)
-   
-    return None
+    imgs = browser.find_elements_by_class_name("confluence-embedded-image")
+
+    for img in imgs:
+        # get image name from 'title' if it exists 
+        if img.get_attribute("title"):      
+            img_name = img.get_attribute("title")
+        else:
+            img_name = img.get_attribute("data-linked-resource-default-alias")
+
+        # find corresponding chart
+        kpifile = get_kpifile(kpi, img_name)
+        if kpifile:
+            img_id = img.get_attribute("data-linked-resource-id")       # unique to each image
+            img_kpi[img_id] = (img_name, kpifile)
+
+    return img_kpi
 
 
 #-------------------------------------------------------------
-# Update image width, height
-# - returns None  
+# Find text descriptions corresponding to all kpi images
+# - returns list (web elements)
 #-------------------------------------------------------------
-def update_image_attributes(browser, new_img, img_name):
+def get_kpi_text(browser, linktext, wikitype):     
+
+    kpitext = []
+    linktextid = linktext.replace(' ', '')
+
+    xpath = ''.join(["//*[contains(@id, '", linktextid, "')]"])
+    imgtxt = browser.find_elements_by_xpath(xpath)
+
+    for txt in imgtxt:
+        # get image name from 'title' if it exists
+        txtid = txt.get_attribute("id")
+        if wikitype == 'Test' and not 'Test' in txtid: continue
+        kpitext.append(txtid)
         
-    browser.execute_script("arguments[0].setAttribute('width', '570')", new_img)
-
-    browser.execute_script("arguments[0].setAttribute('height', '370')", new_img)
-   
-    return None
+    return kpitext
 
 
 #-------------------------------------------------------------
-# Cut/Paste image onto Wiki 
-# - returns None  
+# Update text linked to each kpi to reflect current dates  
 #-------------------------------------------------------------
-def update_image(browser, element, img_name, cut_or_paste):
+def update_kpi_panel_header(browser, frame, end_month):
 
-    actions = ActionChains(browser)
-     
-    if cut_or_paste == 'x':   # cut
+    upd_header = False
+    wikilog.debug("Updating panel header....")
 
-        # find parenet of image
-        parent = element.find_element_by_xpath('..')
-        if parent.tag_name == "p":       # ignore <p> tags
-            parent = parent.find_element_by_xpath('..')
+    try:
 
-        # bring image to view
-        browser.execute_script("return arguments[0].scrollIntoView(true);", element)
-        actions.move_to_element(element).double_click(element).perform()                
+        headers = browser.find_elements_by_xpath("//table[@class='wysiwyg-macro']")
+
+        for header in headers:
+            if header.get_attribute("data-macro-name"):
+
+                if not header.get_attribute("data-macro-name") == "panel":
+                    continue
+                
+                if header.get_attribute("data-macro-parameters"):
+                    if 'KPI' in header.get_attribute("data-macro-parameters"):
+                        continue
+
+                    # Found header panel  
+                    header.click()
+                    time.sleep(3)
+
+                    browser.switch_to.parent_frame()
+                
+                    # bring up edit menu
+                    xpath = "//div[@class='panel-buttons']/a[contains(@class, 'macro-placeholder-property-panel-edit-button first')]/span[@class='panel-button-text']"
+                    edit_menu = browser.find_element_by_xpath(xpath)
+                    edit_menu.click()               
+                    time.sleep(3)
+
+                    # set 'Title text'
+                    title = browser.find_element_by_xpath("//*[@id='macro-param-title']")
+                    title_txt = title.get_attribute("value")
+                    title_str = title_txt.split(":")
+                    wikilog.debug("..update title: {}".format(title_str))
+                    new_title = ''.join([title_str[0], ': ', end_month])
+
+                    title.clear()
+                    time.sleep(2)
+                    title.send_keys(new_title)
+                    time.sleep(2)
+
+                    upd_header = True
+                    wikilog.info(" - KPI panel header updated")
+                    break
+                
+
+    except Exception as e:
+        upd_header = False
+        wikilog.error("Unable to update panel header - {}".format(str(e)))
+    
+
+    finally:
+
+        if upd_header:  # Save changes
+            savebtn = browser.find_element_by_xpath("//button[@class='button-panel-button ok']")
+            savebtn.click()
+            
+        else:           # Cancel changes
+            cancelbtn = browser.find_element_by_xpath("//a[contains(@class, 'button-panel-cancel-link')]")
+            if cancelbtn.is_displayed():
+                cancelbtn.click()
+
         time.sleep(3)
-
-        kpilog.debug("...cut/remove image")
-                           
-        actions.key_down(Keys.CONTROL).send_keys('x').key_up(Keys.CONTROL).perform()    
+        
+        browser.switch_to.frame(frame)
         time.sleep(3)
-
-        return parent
-
-    else:       # paste
-
-        parent = element
-
-        actions.move_to_element(parent).perform()           
-        time.sleep(3)
-        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
-        time.sleep(3)
-
-        kpilog.debug("...update new image attributes")
-                           
-        new_img = parent.find_element_by_tag_name("img")       # use parent to get new image
-        update_image_attributes(browser, new_img, img_name)
-
-        return new_img
+    
+        
+    return upd_header
 
 
 #-------------------------------------------------------------
@@ -294,7 +379,7 @@ def publish_updates(browser, blnCancel, switch_to_frame):
             revert_page_btn.click()
             time.sleep(3)
 
-            kpilog.info("All updates canceled!")
+            wikilog.info("All updates canceled!")
 
             return False
             
@@ -304,7 +389,7 @@ def publish_updates(browser, blnCancel, switch_to_frame):
             updatepage.click()
             time.sleep(3)
 
-            kpilog.info("All updates published!")
+            wikilog.info("All updates published!")
 
     else:   # no changes to page
 
@@ -318,96 +403,134 @@ def publish_updates(browser, blnCancel, switch_to_frame):
 
     return True
 
-        
-#-------------------------------------------------------------
-# Parse HTML images and update images 
-# - returns True/False charts updated  
-#-------------------------------------------------------------
-def update_charts(browser):
 
-    img_chart = {}
+#-------------------------------------------------------------
+# Update text linked to each kpi to reflect current dates  
+#-------------------------------------------------------------
+def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month):
+
+    wikilog.debug("Updating KPI text....")
 
     blnCancel = False
     switch_to_frame = False
-    
+
     try:
 
-        # find images and corresponding charts      
-        imgs = browser.find_elements_by_class_name("confluence-embedded-image")
+         # place page in edit mode for update
+        editpage = browser.find_element_by_id("editPageLink")
+        editpage.click()
+        time.sleep(3)
 
-        for img in imgs:
+        wikilog.debug("Updating KPI text....")
 
-            # get image name from 'title' if it exists 
-            if img.get_attribute("title"):      
-                img_name = img.get_attribute("title")
-            else:
-                img_name = img.get_attribute("data-linked-resource-default-alias")
+        # switch to edit frame
+        frame = browser.find_element_by_xpath("//iframe[@id='wysiwygTextarea_ifr']")
+        browser.switch_to.frame(frame)
+        switch_to_frame = True
 
-            # find corresponding chart
-            chart = get_chart(img_name)
-            if chart:
-                img_id = img.get_attribute("data-linked-resource-id")       # unique to each chart
-                img_chart[img_id] = (img_name, chart)
-
-        # ------------------------------
-        # update images if charts found
-        # ------------------------------
-
-        if img_chart:
-
-            # place page in edit mode for update
-            editpage = browser.find_element_by_id("editPageLink")
-            editpage.click()
-            time.sleep(3)
-
-            kpilog.info("Prepare page for updates...")
-
-            # switch to frame containing images 
-            frame = browser.find_element_by_xpath("//iframe[@id='wysiwygTextarea_ifr']")
-            browser.switch_to.frame(frame)
-
-            switch_to_frame = True
-
-            for img_id, (img_name, img_chart) in img_chart.items():
-
-                kpilog.debug("Image selected for update: {0} {1}".format(img_name, img_chart))
-                css_selector = ''.join(['img[data-linked-resource-id="', img_id, '"]'])
-                element = browser.find_element_by_css_selector(css_selector)
-
-                parent = update_image(browser, element, img_name, 'x')          # cut
-
-                if copy_chart_to_clipboard(img_chart):  # send saved chart to clipboard
-                    kpilog.debug("Paste new image")
-                    new_img = update_image(browser, parent, img_name, 'v')      # paste
-
-                    kpilog.debug("Update new image title")
-                    new_img_id = new_img.get_attribute("data-linked-resource-id")
-                    update_image_title(browser, new_img_id, img_name, frame)
-                    
-                else:
-                    kpilog.error("Update cancelled; Could not update {0}".format(img_name))
-                    blnCancel = True
-                    break
-
-##                break    TESTING
+        # update panel header  
+        if update_kpi_panel_header(browser, frame, end_month):
+            wikilog.info("Panel Header updated")
             
         else:
-            kpilog.error("No images found for update")
+            wikilog.error("Unable to update KPI text for {}!".format(linktext))
+            blnCancel = True
+                
+    except Exception as e:
+        wikilog.error("Unable to update KPI texts for {0} - {1}".format(linktext, str(e)))
+        blnCancel = True
 
+    finally:
+        publish_updates(browser, blnCancel, switch_to_frame)
+
+
+    return 
+
+
+#-------------------------------------------------------------
+# Use file upload function replace image with current kpifile  
+# - returns True/False (images updated)  
+#-------------------------------------------------------------
+def upload_kpi(browser, img, kpifile):
+
+    try:
+        actions = ActionChains(browser)
+            
+        # bring image to view and expand display
+        browser.execute_script("return arguments[0].scrollIntoView(true);", img)
+        actions.move_to_element(img).click(img).perform()                
+        time.sleep(2)
+
+        # uploading new kpi
+        fileinputxpath = "//div[@class='plupload html5']"
+        fileinputcontainer = browser.find_element_by_xpath(fileinputxpath)
+        # make file input accessible
+        browser.execute_script('arguments[0].style = ""; arguments[0].style.display = "block"; arguments[0].style.visibility = "visible";', fileinputcontainer)
+
+        fileinput = fileinputcontainer.find_element_by_tag_name("input")    # file input dialog
+        fileinput.send_keys(kpifile)
+        time.sleep(3)       # allow time for upload
+
+        # confirm changes
+        alldone = browser.find_element_by_xpath("//*[@class='aui-button close-button']")
+        alldone.click()
+        time.sleep(2)
+
+        # close image display 
+        closebtn = browser.find_element_by_xpath("//button[@class='cp-control-panel-close cp-icon']")
+        closebtn.click()
+        time.sleep(2)
+
+    except Exception as e:
+        wikilog.error("Unable to upload {0} - {1}".format(kpifile, str(e)))
+        return False
+
+
+    return True
+    
+        
+#-------------------------------------------------------------
+# Navigate to selected kpi/link, parse HTML images and update 
+# - returns True/False (page updated)  
+#-------------------------------------------------------------
+def update_kpi_page(browser, kpi, linktext, wikitype):
+
+    if not navigate_to_kpi(browser, linktext, wikitype):
+        wikilog.error("No kpis updated for {0} - {1}".format(linktext, kpi))
+        return False
+    
+    try:
+        
+        img_kpi = get_image_kpis(browser, kpi)
+        if not img_kpi:
+            wikilog.warning("{} - No kpi selected for update".format(kpi))
+            return False
+
+        wikilog.info("Prepare page for updates...")
+
+        for img_id, (img_name, kpifile) in img_kpi.items():
+
+            wikilog.debug("Image selected for update: {0} {1}".format(img_name, kpifile))
+            css_selector = ''.join(['img[data-linked-resource-id="', img_id, '"]'])
+            img = browser.find_element_by_css_selector(css_selector)
+
+            kpi_uploaded = upload_kpi(browser, img, kpifile)
+            
+            if not kpi_uploaded:
+
+                wikilog.error("Could not upload KPI: {}".format(kpifile))
+                wikilog.error("Upload cancelled for {0} - {1}".format(kpi, linktext))
+
+                return False
+            
             
     except Exception as e:
 
-        kpilog.error("Update cancelled: {}".format(str(e)))
-        blnCancel = True
-
-
-    finally:
-        if not publish_updates(browser, blnCancel, switch_to_frame):
-            return False
+        wikilog.error("Unable to upload {0} - {1}".format(kpifile, str(e)))
+        return False
  
 
     return True
-
 
 
 #-----------
@@ -427,20 +550,36 @@ def main(wikitype):
         kpi_url = config.autokpi["wikiLive"]
 
     try:
-        kpilog.info("Start Wiki upload....")
+        wikilog.info("Start Wiki upload....")
         browser = get_wikipage(kpi_url)
 
         if not browser:
             sys.exit(-1)
 
-        # validate login credentials; upload charts
+        # validate login credentials
         if log_into_wiki(browser, auth_user, auth_pwd):
-            if update_charts(browser):
-                kpilog.info("Charts uploaded successfully!")
+
+            kpilinks = get_config_linktext()
+            by_month_text, by_fyq_text, end_month = get_kpi_text_update()
+
+            wikilog.debug("Months: {0}; FYQs: {1} End Month: {2}".format(by_month_text, by_fyq_text, end_month))
+
+            # loop through KPI page links
+            for kpi, linktext in kpilinks.items():
+
+                if update_kpi_page(browser, kpi, linktext, wikitype):                 
+                    wikilog.info("{} kpis uploaded successfully".format(kpi))
+
+                    #update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_run_month)
+
+                    browser.refresh()
+                    time.sleep(2)
+                    
+                #break
                     
 
     except Exception as e:
-        kpilog.error("Exception: {}".format(str(e)))
+        wikilog.error("Exception: {}".format(str(e)))
 
 
     finally:
@@ -450,10 +589,13 @@ def main(wikitype):
     
     return
 
-    
+
+#**************
+# M A I N
+#**************
 
 if "__name__" == "__main__":
    
     main("Test")
 
-    kpilog.info("Finished Wiki Upload")
+    wikilog.info("Finished Wiki Upload")
