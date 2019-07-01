@@ -45,6 +45,8 @@ def start_browser():
 #-----------------------------------------------
 def get_wikipage(url):
 
+    browser = None
+
     try:                       
         browser = start_browser()
         browser.get(url)
