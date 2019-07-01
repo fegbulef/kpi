@@ -18,7 +18,8 @@ import argparse
 # user defined modules
 import util
 import config
-import autokpi  
+import autokpi
+import wikiexport
 
 
 #*************#
@@ -46,6 +47,8 @@ if kpi_dict:
         if args.fromxl.upper() == 'Y': importfromxl = True
 
     autokpi.run_autokpi(kpi_dict, importfromxl)
+
+    wikiexport.main('Test')
     
 else:
 
