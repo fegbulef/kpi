@@ -210,7 +210,7 @@ def get_kpifile(kpi, img_name):
            or (img_name in ["CMA-CFDs-Month.PNG", file] and file == "AllCFD_CMA_Months.png") \
            or (img_name in ["CMA-CFDs-Qtr.PNG", file] and file == "AllCFD_CMA_FYQ.png") \
            or (img_name in ["CMM-CFDs-Month.PNG", file] and file == "AllCFD_CMM_Months.png") \
-           or (img_name in ["CMM-CFDs-Qtr.PNG", file] and file == "AllCFD_CMM_FYQs.png") \
+           or (img_name in ["CMM-CFDs-Qtr.PNG", file] and file == "AllCFD_CMM_FYQ.png") \
            or (img_name in ["CMSAM-PSIRT.PNG", file] and file == "PSIRT_AllMonths.png") \
            or (img_name in ["CMS-PSIRT.PNG", file] and file == "PSIRT_CMS_Months.png") \
            or (img_name in ["CMA-PSIRT.PNG", file] and file == "PSIRT_CMA_Months.png") \
@@ -280,6 +280,55 @@ def get_kpi_text(browser, linktext, wikitype):
 
 
 #-------------------------------------------------------------
+# Publish Wiki changes
+# - returns True/False (updates published)
+#-------------------------------------------------------------
+def publish_updates(browser, kpi, blnCancel, switch_to_frame):
+
+    if switch_to_frame:
+        browser.switch_to.parent_frame()
+
+        if blnCancel:   # cancel editing if no update
+
+            ellipsis = browser.find_element_by_id("rte-button-ellipsis")
+            ellipsis.click()
+            time.sleep(3)
+
+            revertbtn = browser.find_element_by_id("rte-show-revert")
+            revertbtn.click()
+            time.sleep(3)
+
+            # confirm revert page
+            revert_page_btn = browser.find_element_by_id("qed-discard-button")
+            revert_page_btn.click()
+            time.sleep(3)
+
+            wikilog.info("All updates canceled!")
+
+            return False
+            
+        else:
+            
+            updatepage = browser.find_element_by_id("rte-button-publish")
+            updatepage.click()
+            time.sleep(3)
+
+            wikilog.info("All {} updates published!".format(kpi))
+
+    else:   # no changes to page
+
+        cancelpage = browser.find_element_by_id("rte-button-cancel")
+        if cancelpage.is_displayed():
+            cancelpage.click()
+            time.sleep(3)
+            
+        return False
+
+
+    return True
+
+
+#-------------------------------------------------------------
 # Update text linked to each kpi to reflect current dates  
 #-------------------------------------------------------------
 def update_kpi_panel_header(browser, frame, end_month):
@@ -316,9 +365,10 @@ def update_kpi_panel_header(browser, frame, end_month):
                     # set 'Title text'
                     title = browser.find_element_by_xpath("//*[@id='macro-param-title']")
                     title_txt = title.get_attribute("value")
+                    wikilog.debug("...old title: {}".format(title_txt))
                     title_str = title_txt.split(":")
-                    wikilog.debug("..update title: {}".format(title_str))
                     new_title = ''.join([title_str[0], ': ', end_month])
+                    wikilog.debug("...new title: {}".format(new_title))
 
                     title.clear()
                     time.sleep(2)
@@ -326,7 +376,6 @@ def update_kpi_panel_header(browser, frame, end_month):
                     time.sleep(2)
 
                     upd_header = True
-                    wikilog.info(" - KPI panel header updated")
                     break
                 
 
@@ -356,60 +405,9 @@ def update_kpi_panel_header(browser, frame, end_month):
 
 
 #-------------------------------------------------------------
-# Publish Wiki changes
-# - returns True/False (updates published)
-#-------------------------------------------------------------
-def publish_updates(browser, blnCancel, switch_to_frame):
-
-    if switch_to_frame:
-        browser.switch_to.parent_frame()
-
-        if blnCancel:   # cancel editing if no update
-
-            ellipsis = browser.find_element_by_id("rte-button-ellipsis")
-            ellipsis.click()
-            time.sleep(3)
-
-            revertbtn = browser.find_element_by_id("rte-show-revert")
-            revertbtn.click()
-            time.sleep(3)
-
-            # confirm revert page
-            revert_page_btn = browser.find_element_by_id("qed-discard-button")
-            revert_page_btn.click()
-            time.sleep(3)
-
-            wikilog.info("All updates canceled!")
-
-            return False
-            
-        else:
-            
-            updatepage = browser.find_element_by_id("rte-button-publish")
-            updatepage.click()
-            time.sleep(3)
-
-            wikilog.info("All updates published!")
-
-    else:   # no changes to page
-
-        cancelpage = browser.find_element_by_id("rte-button-cancel")
-        if cancelpage.is_displayed():
-            cancelpage.click()
-            time.sleep(3)
-            
-        return False
-
-
-    return True
-
-
-#-------------------------------------------------------------
 # Update text linked to each kpi to reflect current dates  
 #-------------------------------------------------------------
 def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month):
-
-    wikilog.debug("Updating KPI text....")
 
     blnCancel = False
     switch_to_frame = False
@@ -430,18 +428,51 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
 
         # update panel header  
         if update_kpi_panel_header(browser, frame, end_month):
-            wikilog.info("Panel Header updated")
+            wikilog.info("{} panel header updated".format(linktext))
+
+            # find all text elements corresponding to kpis
+            xpath = ''.join(["//div[@class='content-wrapper']"])
+            divs = browser.find_elements_by_xpath(xpath)
+        
+            for div in divs:        # div -> h3 -> text
+                h3 = div.find_element_by_tag_name("h3")
+                if not h3: continue
+
+                html = None
+                updtext = None
             
+                if "by month" in h3.text:
+                    html = h3.get_attribute("innerHTML").split("by month")
+                    updtext = ''.join(["by month, ", by_month_text])
+
+                elif "by financial quarter" in h3.text:
+                    html = h3.get_attribute("innerHTML").split("by financial quarter")
+                    updtext = ''.join(["by financial quarter, ", by_fyq_text])
+                
+                else:
+                    continue
+
+                # update text
+                if html:
+                    htmlupd = ''.join([html[0], updtext])
+                    browser.execute_script("arguments[0].innerHTML = arguments[1];", h3, htmlupd)
+                    time.sleep(2)
+
+            wikilog.info("All {} kpi texts updated".format(linktext))
+             
+
         else:
             wikilog.error("Unable to update KPI text for {}!".format(linktext))
             blnCancel = True
+
                 
     except Exception as e:
         wikilog.error("Unable to update KPI texts for {0} - {1}".format(linktext, str(e)))
         blnCancel = True
+        
 
     finally:
-        publish_updates(browser, blnCancel, switch_to_frame)
+        publish_updates(browser, kpi, blnCancel, switch_to_frame)
 
 
     return 
@@ -480,6 +511,8 @@ def upload_kpi(browser, img, kpifile):
         closebtn = browser.find_element_by_xpath("//button[@class='cp-control-panel-close cp-icon']")
         closebtn.click()
         time.sleep(2)
+
+        wikilog.info("{} uploaded successfully".format(kpifile))
 
     except Exception as e:
         wikilog.error("Unable to upload {0} - {1}".format(kpifile, str(e)))
@@ -570,12 +603,10 @@ def main(wikitype):
                 if update_kpi_page(browser, kpi, linktext, wikitype):                 
                     wikilog.info("{} kpis uploaded successfully".format(kpi))
 
-                    #update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_run_month)
+                    update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month)
 
                     browser.refresh()
                     time.sleep(2)
-                    
-                #break
                     
 
     except Exception as e:
