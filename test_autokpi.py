@@ -22,7 +22,6 @@ from selenium import webdriver
 # user defined modules
 import util
 import config
-import autokpi
 import importdata
 import dataprep
 import plotkpi
@@ -69,7 +68,7 @@ CFPD_plot_data = os.path.join(CWD, "test_data", "CFPD_plot_data.csv")
 # 1. Validate kpi codes input 
 def test_get_kpi_codes():
 #---------------------------------------------------------
-    kpi_dict = autokpi.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
+    kpi_dict = util.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
     assert kpi_dict == {'JIRA': ['IFD','AllCFD'], 'CDETS': ['PSIRT']}
     
 
@@ -150,7 +149,6 @@ def test_reformat_import_dates():
 # 4. Get Open/closed counts
 def test_open_closed_counts():
 #---------------------------------------------------------
-    fyq_df = pd.DataFrame(test_months)
 
     import_df = pd.read_csv(CFPD_raw)     
     reformat_df = dataprep.reformat_df_dates(import_df, JIRAconfig, False)
@@ -289,7 +287,7 @@ def test_fyq_kpi_chart():
 
 #---------------------------------------------------------
 # 11. Test upload to confluence
-#@pytest.mark.skip(reason="Tested")
+@pytest.mark.skip(reason="Under review")
 def test_wikiexport():
 #---------------------------------------------------------
     url = config.autokpi["wikiLive"]
