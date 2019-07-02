@@ -146,6 +146,39 @@ def get_month_fyq(months):
 
 
 #-------------------------------------------------------------
+# Parse kpi list and return tool with selected kpi codes
+# - returns tool/kpi (dict) 
+#-------------------------------------------------------------
+def get_kpi_codes(kpi_list):
+
+    out_kpi = {}
+    tooldict = config.autokpi["tools"]
+
+    for code in kpi_list:
+        if code in out_kpi.keys(): continue
+
+        # tool selected - add tool and all associated kpi codes
+        if code in tooldict:
+            out_kpi[code] = []      
+            for k in tooldict[code]["kpi"].keys():      
+                out_kpi[code].append(k)
+
+        # kpi code input - get associated tool and add kpi
+        else:      
+            for tool in tooldict:
+                 if code in tooldict[tool]["kpi"].keys():
+                    if out_kpi.get(tool):
+                        if not code in out_kpi[tool]:   # kpi already saved
+                            out_kpi[tool].append(code)
+                    else:
+                        out_kpi[tool] = []
+                        out_kpi[tool].append(code)
+                    break
+    
+    return out_kpi
+
+
+#-------------------------------------------------------------
 # Get logger
 # - returns log handler 
 #-------------------------------------------------------------

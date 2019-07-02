@@ -12,6 +12,7 @@ Description:  Export KPI charts to Confluence (Wiki) page
 import os
 import sys
 import time
+import argparse
 
 import util   # user defined
 import config # user defined
@@ -55,8 +56,6 @@ def get_wikipage(url):
         wikilog.error("Unable to access Confluence: {}".format(str(e)))
         if browser:
             browser.quit()
-            
-        return None
 
     return browser
 
@@ -627,8 +626,20 @@ def main(wikitype):
 # M A I N
 #**************
 
-if "__name__" == "__main__":
+if __name__ == "__main__":
    
-    main("Test")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-test", type=str, help="Y/N/blank to indicate if script to run against test wikipage")
+    args = parser.parse_args()
 
-    wikilog.info("Finished Wiki Upload")
+    wikitype = ''
+    
+    # Validate parameter
+    if args.test:
+        if args.test.upper() == 'Y':
+            wikitype = 'Test'
+
+    main(wikitype)
+
+    wikilog.info("")
+    wikilog.info("Finished!!")
