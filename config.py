@@ -16,7 +16,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "logfile": "kpilog.log",
            "logname": "autokpi",
 
-           "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB",
+           "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/KPIs",
            "wikiTest": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Test+KPIs+Page",
            "wikilogin": r"https://jira-eng-gpk2.cisco.com/jira/login.jsp",
            

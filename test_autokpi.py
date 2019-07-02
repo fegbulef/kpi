@@ -287,7 +287,7 @@ def test_fyq_kpi_chart():
 
 #---------------------------------------------------------
 # 11. Test upload to confluence
-@pytest.mark.skip(reason="Under review")
+#@pytest.mark.skip(reason="Under review")
 def test_wikiexport():
 #---------------------------------------------------------
     url = config.autokpi["wikiLive"]
