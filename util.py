@@ -73,7 +73,7 @@ def get_kpi_months(start_dt, end_dt):
 
     if end_dt is None:      # default to end of next month
         dt = date.today()
-        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 2, -1)
+        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 1, -1)
     
     if start_dt is None:    # default from config
         filter_mth = config.autokpi["months_to_plot"]

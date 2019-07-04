@@ -124,7 +124,7 @@ def get_chart_labels(kpi):
         axopen = 'All Defects Opened'
     elif kpi == 'CFPD':
         axopen = 'Customer-Priority Defects Opened'
-    elif kpi == 'AllCFD':
+    elif kpi == 'CFD':
         axopen = 'CFDs Opened'
        
     # CDETS kpis
@@ -148,7 +148,10 @@ def get_filename(kpi, figname, product, istest):
     ext = '_Test' if istest else ''  # run from test module
     
     if kpi == 'ATC':
-        figname = str.join('', [kpi, '_', product, figname, ext, '.png'])
+        if figname in ['%', '']:
+            figname = str.join('', ['ATC_', figname, product, 'Passes', ext, '.png'])
+        else:
+            figname = str.join('', ['ATC_', product, figname, ext, '.png'])
 
     else:
         ext = str.join('',['_', figname, ext, '.png'])
@@ -226,7 +229,11 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         
         # format yaxis
         yticks = ax1.get_yticks().tolist()
-        ax1_ylim = max(yticks)
+
+        if max(yticks) >= max(opendefects):
+            ax1_ylim = max(yticks)
+        else:
+            ax1_ylim = max(opendefects)
        
         ax1.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
         if ax1_ylim <= 10:
@@ -276,8 +283,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
             if ax2_ylim > 250:
                 max_mttr = 250
         else:
-            if ax2_ylim > 1000:
-                max_mttr = 1000 if 10*(ax1_ylim) > 1000 else 10*(ax1_ylim) 
+            if ax2_ylim > 700:
+                max_mttr = 700 if 10*(ax1_ylim) > 700 else 10*(ax1_ylim) 
                 
         ax2.set_ylim(bottom=0, top=max_mttr)
  
@@ -299,19 +306,19 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         ax2.plot(df[xaxis], mttrdays, label=mttr_target, linestyle='--', color='darkblue')
 
         #****************
-        # setup legend
+        # setup legend      NO LONGER REQUIRED
         #****************
         
-        h1, l1 = ax1.get_legend_handles_labels()
-        labels_order = [1,2,0]      # Open, Closed, Open Defects
-
-        h2, l2 = ax2.get_legend_handles_labels()
-
-        # set MTTR labels to 'blue'
-        leg = ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=8, loc='upper right')
-        for text in leg.get_texts():
-            if 'MTTR' in text.get_text():
-                text.set_color('darkblue')
+##        h1, l1 = ax1.get_legend_handles_labels()
+##        labels_order = [1,2,0]      # Open, Closed, Open Defects
+##
+##        h2, l2 = ax2.get_legend_handles_labels()
+##
+##        # set MTTR labels to 'blue'
+##        leg = ax2.legend([h1[i] for i in labels_order]+h2, [l1[i] for i in labels_order]+l2, fontsize=8, loc='upper right')
+##        for text in leg.get_texts():
+##            if 'MTTR' in text.get_text():
+##                text.set_color('darkblue')
             
         #*************
         # save chart
@@ -361,7 +368,7 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
  
         if chart_key.upper() == 'MAIN':
 
-            figname = 'AllTests'
+            figname = 'Tests'
             color = 'blue'
             yaxis = df["jobs_count"].values.tolist()
             ax1.set_ylabel("ATC Tests Implemented")
@@ -370,7 +377,7 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
 
         elif '%' in chart_key.upper():      # '%Passes'
 
-            figname = '%Passes'
+            figname = '%'
             color = 'green'
             yaxis = df["%passed"].values.tolist()
             ax1.set_ylabel("% ATC Passes")
@@ -379,7 +386,7 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
 
         else:                               # 'Passes'
 
-            figname = 'Passes'
+            figname = ''
             yaxis1 = df["passed"].values.tolist()
             yaxis2 = df["jobs_count"].values.tolist()
             ax1.set_ylabel("ATC Passes and Tests Run") 

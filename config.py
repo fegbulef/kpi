@@ -32,7 +32,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "fyq_start": "01/08/2016",       # Start FYQ 
 
            "fyqs_to_plot": 14,              
-           "months_to_plot": -19,           
+           "months_to_plot": -18,           
 
            # KPI tools: JIRA - [CFPD, AFCD, AIFD]
            "tools": {"JIRA": {"apiserver": "https://jira-eng-gpk2.cisco.com/jira/",
@@ -62,7 +62,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
                                                         AND created >= 2016-08-01
                                                         ORDER BY created ASC, priority DESC, cf[10408] ASC, resolved DESC, assignee ASC'''},
                                       
-                                      "AllCFD": {"wikitext": "Customer Found Defects",
+                                      "CFD": {"wikitext": "Customer Found Defects",
 
                                                  "kpi_title": "XXX JIRA CFDs per",
                                                  "jql": '''project in (CMM, SERVER, CLIENT)
