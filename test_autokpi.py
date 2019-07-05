@@ -17,7 +17,6 @@ import pytest
 
 from jira import JIRA
 from datetime import datetime
-from selenium import webdriver
 
 # user defined modules
 import util
@@ -25,7 +24,6 @@ import config
 import importdata
 import dataprep
 import plotkpi
-import wikiexport
 
 
 #******************
@@ -68,8 +66,8 @@ CFPD_plot_data = os.path.join(CWD, "test_data", "CFPD_plot_data.csv")
 # 1. Validate kpi codes input 
 def test_get_kpi_codes():
 #---------------------------------------------------------
-    kpi_dict = util.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
-    assert kpi_dict == {'JIRA': ['IFD','AllCFD'], 'CDETS': ['PSIRT']}
+    kpi_dict = util.get_kpi_codes(['IFD','PSIRT','CDETS','CFD', 'ACANO'])
+    assert kpi_dict == {'JIRA': ['IFD','CFD'], 'CDETS': ['PSIRT'], 'ACANO': ['ATC']}
     
 
 #---------------------------------------------------------
@@ -283,27 +281,4 @@ def test_fyq_kpi_chart():
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
-
-
-#---------------------------------------------------------
-# 11. Test upload to confluence
-#@pytest.mark.skip(reason="Under review")
-def test_wikiexport():
-#---------------------------------------------------------
-    url = config.autokpi["wikiLive"]
-    user = config.autokpi["auth"]["user"]
-    pwd = config.autokpi["auth"]["password"]
-
-    try:
-
-        # check url is valid
-        browser = wikiexport.get_wikipage(url)
-        assert not browser is None
         
-        # check auth credentials are valid
-        assert wikiexport.log_into_wiki(browser, user, pwd) == True
-
-    finally:
-        
-        browser.quit()
-    
