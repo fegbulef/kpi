@@ -222,12 +222,19 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
             
         yplt1.set_bbox(dict(facecolor='black', alpha=0.7))
         yplt1.set_color('white')
+                  
+        #**********************
+        # plot OpenDefects
+        #**********************
+        
+        ax1.plot(df[xaxis], opendefects, label=axdefects, color='black')
+
 
         # format xaxis
         ax1.set_xticks(index)   #+bar_width/2)
         ax1.set_xticklabels(df[xaxis], rotation=90)
-        
-        # format yaxis
+
+       # format yaxis
         yticks = ax1.get_yticks().tolist()
 
         if max(yticks) >= max(opendefects):
@@ -245,17 +252,11 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         for t in ax1.yaxis.get_majorticklabels():
             if t == 0:
                 t.set_visible(False)
-
                 
-        #**********************
-        # plot OpenDefects
-        #**********************
-        
-        ax1.plot(df[xaxis], opendefects, label=axdefects, color='black')
 
         #****************
         # plot MTTR
-           #****************
+        #****************
 
         ax2 = ax1.twinx()
         ax2.spines['top'].set_visible(False)
@@ -267,7 +268,22 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         ax2.plot(df[xaxis], mttr, label="MTTR(Days)", color='darkblue')
         ax2.tick_params(axis='y', labelcolor='blue')
 
-        # calibrate MTTR plot
+
+        #*********************
+        # plot MTTR target
+        #*********************
+
+        mttr_target = ''
+        
+        if kpi == 'PSIRT':
+            mttr_target = "PSIRT MTTR Target(28 Days)"
+        else:
+            mttr_target = "MTTR Target(28 Days)"
+            
+        ax2.plot(df[xaxis], mttrdays, label=mttr_target, linestyle='--', color='darkblue')
+
+
+        # calibrate MTTR 
         yticks = ax2.get_yticks().tolist()
         ax2_ylim = max(yticks)
 
@@ -276,35 +292,18 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
             ax2_ylim = 10
             ax2.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
-        # calibrate MTTR
         max_mttr = ax2_ylim
-        
-        if ax1_ylim <= 10:
-            if ax2_ylim > 250:
-                max_mttr = 250
-        else:
-            if ax2_ylim > 700:
-                max_mttr = 700 if 10*(ax1_ylim) > 700 else 10*(ax1_ylim) 
+
+        if ax2_ylim > 700:
+            max_mttr = 700  
                 
         ax2.set_ylim(bottom=0, top=max_mttr)
  
         for t in ax2.yaxis.get_majorticklabels():
             if t == 0:
                 t.set_visible(False)
+
                 
-
-        #*********************
-        # plot MTTR target
-        #*********************
-
-        mttr_target = ''
-        if kpi == 'PSIRT':
-            mttr_target = "PSIRT MTTR Target(28 Days)"
-        else:
-            mttr_target = "MTTR Target(28 Days)"
-            
-        ax2.plot(df[xaxis], mttrdays, label=mttr_target, linestyle='--', color='darkblue')
-
         #****************
         # setup legend      NO LONGER REQUIRED
         #****************
@@ -319,6 +318,7 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 ##        for text in leg.get_texts():
 ##            if 'MTTR' in text.get_text():
 ##                text.set_color('darkblue')
+
             
         #*************
         # save chart
@@ -409,7 +409,14 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         # format y axis
         yticks = ax1.get_yticks().tolist()
         maxy = max(yticks)
-        ax1.set_ylim(bottom=0, top=maxy)
+
+        if '%' in figname:
+            ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
+            ax1.set_ylim(bottom=85, top=100)
+        else:
+            miny = maxy//2
+            ax1.set_ylim(bottom=miny, top=maxy)
+
 
         fig.tight_layout()
          

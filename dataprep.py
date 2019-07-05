@@ -409,12 +409,14 @@ def get_atc_plot_data(df, toolcfg):
     df = df.assign(rundate=rundate) 
    
     # filter data by rundate
-    end_dt = date.today()
-    mth_filter = config.autokpi["months_to_plot"]
+    dt = date.today()
+    end_dt = util.get_next_date(datetime(dt.year, dt.month, 1), 0, -1)
+    mth_filter = config.autokpi["months_to_plot"]+1    # add 1 because dates are inclusive
     start_dt = util.get_next_date(datetime(end_dt.year, end_dt.month, 1), mth_filter, 0)
 
     end_dt = pd.to_datetime(end_dt, format="%Y-%m-%d")          # put dates in right format to 
     start_dt = pd.to_datetime(start_dt, format="%Y-%m-%d")      # compare with dataframe dates
+    kpilog.debug("ATC dates: Start - {0}; End - {1}".format(start_dt, end_dt))
     
     df_atc = filter_df_by_date(df, toolcfg, start_dt, end_dt)
 
@@ -426,7 +428,6 @@ def get_atc_plot_data(df, toolcfg):
     df_atc_plot["%passed"] = (df_atc_plot.passed / df_atc_plot.jobs_count)*100
     df_atc_plot["%failed"] = (df_atc_plot.totalfailed / df_atc_plot.jobs_count)*100
 
-    #kpilog.debug("ATC Plot data\n: {0}".format(df_atc_plot.info()))
     
     return df_atc_plot
             
