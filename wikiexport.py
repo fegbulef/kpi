@@ -20,8 +20,14 @@ import config # user defined
 from datetime import datetime
 
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+
+from xvfbwrapper import Xvfb
+
 
 # setup log
 wikilog = util.setup_logger("wikilog", "wikilog.log")
@@ -32,7 +38,7 @@ wikilog = util.setup_logger("wikilog", "wikilog.log")
 # - returns browser object
 #-----------------------------------------------
 def start_browser():
-
+    
     ff_browser = webdriver.Firefox()
     ff_browser.implicitly_wait(10)
     ff_browser.maximize_window()
@@ -54,7 +60,7 @@ def get_wikipage(url):
 
     except Exception as e:                         
         wikilog.error("Unable to access Confluence: {}".format(str(e)))
-        if browser:
+        if not browser is None:
             browser.quit()
 
     return browser
@@ -145,7 +151,6 @@ def get_kpi_text_update():
     return by_month_text, by_fyq_text, lastdt
 
 
-
 #-------------------------------------------------------------
 # For given kpi/link, parse HTML images and update 
 # - returns True/False (images updated)  
@@ -196,34 +201,42 @@ def get_kpifile(kpi, img_name):
     kpisavedir = os.path.join(cwd, config.autokpi["savedir"])
 
     for file in os.listdir(kpisavedir):
-        if not kpi in file: continue
+        if not kpi in file and not kpi == "Dashboard": continue     # allow update of 'KPI Dashboard'
         
-        if (img_name in ["CMSA-Month.PNG", file] and file == "CFPD_AllMonths.png") \
-           or (img_name in ["CMSA-Quarter.PNG", file] and file == "CFPD_AllFYQ.png") \
-           or (img_name in ["CMS-Month.PNG", file] and file == "CFPD_CMS_Months.png") \
-           or (img_name in ["CMS-Quarter.PNG", file] and file == "CFPD_CMS_FYQ.png") \
-           or (img_name in ["CMA-Month.PNG", file] and file == "CFPD_CMA_Months.png") \
-           or (img_name in ["CMA-Quarter.PNG", file] and file == "CFPD_CMA_FYQ.png") \
-           or (img_name in ["All-CFDs-Month.PNG", file] and file == "AllCFD_AllMonths.png") \
-           or (img_name in ["All-CFDs-Qtr.PNG", file] and file == "AllCFD_AllFYQ.png") \
-           or (img_name in ["CMS-CFDs-Month.PNG", file] and file == "AllCFD_CMS_Months.png") \
-           or (img_name in ["CMS-CFDs-Qtr.PNG", file] and file == "AllCFD_CMS_FYQ.png") \
-           or (img_name in ["CMA-CFDs-Month.PNG", file] and file == "AllCFD_CMA_Months.png") \
-           or (img_name in ["CMA-CFDs-Qtr.PNG", file] and file == "AllCFD_CMA_FYQ.png") \
-           or (img_name in ["CMM-CFDs-Month.PNG", file] and file == "AllCFD_CMM_Months.png") \
-           or (img_name in ["CMM-CFDs-Qtr.PNG", file] and file == "AllCFD_CMM_FYQ.png") \
-           or (img_name in ["CMSAM-PSIRT.PNG", file] and file == "PSIRT_AllMonths.png") \
-           or (img_name in ["CMS-PSIRT.PNG", file] and file == "PSIRT_CMS_Months.png") \
-           or (img_name in ["CMA-PSIRT.PNG", file] and file == "PSIRT_CMA_Months.png") \
-           or (img_name in ["CMM-PSIRT.PNG", file] and file == "PSIRT_CMM_Months.png") \
-           or (img_name in ["All-Month.PNG", file] and file == "IFD_AllMonths.png") \
-           or (img_name in ["All-Qtr.PNG", file] and file == "IFD_AllFYQ.png") \
-           or (img_name in ["CMS-IFD-Month.PNG", file] and file == "IFD_CMS_Months.png") \
-           or (img_name in ["CMS-IFD-Qtr.PNG", file] and file == "IFD_CMS_FYQ.png") \
-           or (img_name in ["CMA-IFD-Month.PNG", file] and file == "IFD_CMA_Months.png") \
-           or (img_name in ["CMA-IFD-Qtr.PNG", file] and file == "IFD_CMA_FYQ.png") \
-           or (img_name in ["CMM-IFD-Month.PNG", file] and file == "IFD_CMM_Months.png") \
-           or (img_name in ["CMM-IFD-Qtr.PNG", file] and file == "IFD_CMM_FYQ.png"):
+        if (img_name in "CMSA-Month.PNG" and file == "CFPD_AllMonths.png") \
+           or (img_name in "CMSA-Quarter.PNG" and file == "CFPD_AllFYQ.png") \
+           or (img_name in "CMS-Month.PNG" and file == "CFPD_CMS_Months.png") \
+           or (img_name in "CMS-Quarter.PNG" and file == "CFPD_CMS_FYQ.png") \
+           or (img_name in "CMA-Month.PNG" and file == "CFPD_CMA_Months.png") \
+           or (img_name in "CMA-Quarter.PNG" and file == "CFPD_CMA_FYQ.png") \
+           or (img_name in "All-CFDs-Month.PNG" and file == "CFD_AllMonths.png") \
+           or (img_name in "All-CFDs-Qtr.PNG" and file == "CFD_AllFYQ.png") \
+           or (img_name in "CMS-CFDs-Month.PNG" and file == "CFD_CMS_Months.png") \
+           or (img_name in "CMS-CFDs-Qtr.PNG" and file == "CFD_CMS_FYQ.png") \
+           or (img_name in "CMA-CFDs-Month.PNG" and file == "CFD_CMA_Months.png") \
+           or (img_name in "CMA-CFDs-Qtr.PNG" and file == "CFD_CMA_FYQ.png") \
+           or (img_name in "CMM-CFDs-Month.PNG" and file == "CFD_CMM_Months.png") \
+           or (img_name in "CMM-CFDs-Qtr.PNG" and file == "CFD_CMM_FYQ.png") \
+           or (img_name in "CMSAM-PSIRT.PNG" and file == "PSIRT_AllMonths.png") \
+           or (img_name in "CMS-PSIRT.PNG" and file == "PSIRT_CMS_Months.png") \
+           or (img_name in "CMA-PSIRT.PNG" and file == "PSIRT_CMA_Months.png") \
+           or (img_name in "CMM-PSIRT.PNG" and file == "PSIRT_CMM_Months.png") \
+           or (img_name in "All-Month.PNG" and file == "IFD_AllMonths.png") \
+           or (img_name in "All-Qtr.PNG" and file == "IFD_AllFYQ.png") \
+           or (img_name in "CMS-IFD-Month.PNG" and file == "IFD_CMS_Months.png") \
+           or (img_name in "CMS-IFD-Qtr.PNG" and file == "IFD_CMS_FYQ.png") \
+           or (img_name in "CMA-IFD-Month.PNG" and file == "IFD_CMA_Months.png") \
+           or (img_name in "CMA-IFD-Qtr.PNG" and file == "IFD_CMA_FYQ.png") \
+           or (img_name in "CMM-IFD-Month.PNG" and file == "IFD_CMM_Months.png") \
+           or (img_name in "CMM-IFD-Qtr.PNG" and file == "IFD_CMM_FYQ.png") \
+           or (img_name in ["ATC-ServerTests.PNG", "ATC-Tests.PNG"] and file == "ATC_ServerTests.png") \
+           or (img_name in ["ATC-ServerPasses.PNG", "ATC.PNG"] and file == "ATC_ServerPasses.png") \
+           or (img_name in ["ATC-%ServerPasses.PNG", "%ATC.PNG"] and file == "ATC_%ServerPasses.png") \
+           or (img_name in ["ATC-ClientTests.PNG", "ATC-Tests-All.PNG"] and file == "ATC_ClientTests.png") \
+           or (img_name in ["ATC-ClientPasses.PNG", "ATC-All.PNG"] and file == "ATC_ClientPasses.png") \
+           or (img_name in ["ATC-%ClientPasses.PNG", "%ATC-All.PNG", "image2019-7-4_17-2-40.png"] \
+               and file == "ATC_%ClientPasses.png"):
+
            
             kpifile = os.path.join(kpisavedir, file).replace('\\', '\\\\')  # escape backslashes
             wikilog.debug("Chart exists: {}".format(kpifile))
@@ -332,14 +345,20 @@ def publish_updates(browser, kpi, blnCancel, switch_to_frame):
 #-------------------------------------------------------------
 # Update text linked to each kpi to reflect current dates  
 #-------------------------------------------------------------
-def update_kpi_panel_header(browser, frame, end_month):
+def update_kpi_panel_header(browser, kpi, end_month):
 
+    if kpi == "Dashboard":  # no panel header to update
+        return True
+
+    panel_menu = False
     upd_header = False
+
     wikilog.debug("Updating panel header....")
 
     try:
 
         headers = browser.find_elements_by_xpath("//table[@class='wysiwyg-macro']")
+        time.sleep(3)
 
         for header in headers:
             if header.get_attribute("data-macro-name"):
@@ -351,33 +370,38 @@ def update_kpi_panel_header(browser, frame, end_month):
                     if 'KPI' in header.get_attribute("data-macro-parameters"):
                         continue
 
-                    # Found header panel  
+                    # Found header panel 
                     header.click()
                     time.sleep(3)
 
                     browser.switch_to.parent_frame()
+
+                    # panel header edit 
+                    xpath = "/html/body/div[13]/div[2]/div/a[1]/span[2]"
+                    try:
+                        panel_menu = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.XPATH, xpath)))
+                        panel_menu.click()               
+                        time.sleep(3)
+
+                        # set panel title
+                        title = browser.find_element_by_xpath("//*[@id='macro-param-title']")
+                        title_txt = title.get_attribute("value")
+                        wikilog.debug("...old title: {}".format(title_txt))
+
+                        s = title_txt.split(":")
+                        new_title = ''.join([s[0], ': ', end_month])
+                        wikilog.debug("...new title: {}".format(new_title))
+
+                        title.clear()
+                        time.sleep(3)
+                        title.send_keys(new_title)
+                        time.sleep(3)
+
+                        upd_header = True
+                        break
                 
-                    # bring up edit menu
-                    xpath = "//div[@class='panel-buttons']/a[contains(@class, 'macro-placeholder-property-panel-edit-button first')]/span[@class='panel-button-text']"
-                    edit_menu = browser.find_element_by_xpath(xpath)
-                    edit_menu.click()               
-                    time.sleep(3)
-
-                    # set 'Title text'
-                    title = browser.find_element_by_xpath("//*[@id='macro-param-title']")
-                    title_txt = title.get_attribute("value")
-                    wikilog.debug("...old title: {}".format(title_txt))
-                    title_str = title_txt.split(":")
-                    new_title = ''.join([title_str[0], ': ', end_month])
-                    wikilog.debug("...new title: {}".format(new_title))
-
-                    title.clear()
-                    time.sleep(2)
-                    title.send_keys(new_title)
-                    time.sleep(2)
-
-                    upd_header = True
-                    break
+                    except TimeoutException:
+                        wikilog.error("Panel menu not displayed - Timeout Exception!")
                 
 
     except Exception as e:
@@ -387,19 +411,20 @@ def update_kpi_panel_header(browser, frame, end_month):
 
     finally:
 
-        if upd_header:  # Save changes
-            savebtn = browser.find_element_by_xpath("//button[@class='button-panel-button ok']")
-            savebtn.click()
+        if panel_menu:   # panel displayed
             
-        else:           # Cancel changes
-            cancelbtn = browser.find_element_by_xpath("//a[contains(@class, 'button-panel-cancel-link')]")
-            if cancelbtn.is_displayed():
-                cancelbtn.click()
+            if upd_header:  # Save changes
+                savebtn = browser.find_element_by_xpath("//*[@id='macro-details-page']/div[2]/button")
+                browser.execute_script("return arguments[0].scrollIntoView(true);", savebtn)
+                savebtn.click()
+            
+            else:           # Cancel changes
+                cancelbtn = browser.find_element_by_xpath("//*[@id='macro-details-page']/div[2]/a[2]")
+                if cancelbtn.is_displayed():
+                    browser.execute_script("return arguments[0].scrollIntoView(true);", cancelbtn)
+                    cancelbtn.click()
 
-        time.sleep(3)
-        
-        browser.switch_to.frame(frame)
-        time.sleep(3)
+            time.sleep(3)
     
         
     return upd_header
@@ -428,8 +453,12 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
         switch_to_frame = True
 
         # update panel header  
-        if update_kpi_panel_header(browser, frame, end_month):
+        if update_kpi_panel_header(browser, kpi, end_month):
             wikilog.info("{} panel header updated".format(linktext))
+
+            # switch back to editing frame
+            if not kpi == "Dashboard":
+                browser.switch_to.frame(frame)
 
             # find all text elements corresponding to kpis
             xpath = ''.join(["//div[@class='content-wrapper']"])
@@ -506,12 +535,12 @@ def upload_kpi(browser, img, kpifile):
         # confirm changes
         alldone = browser.find_element_by_xpath("//*[@class='aui-button close-button']")
         alldone.click()
-        time.sleep(2)
+        time.sleep(3)
 
         # close image display 
         closebtn = browser.find_element_by_xpath("//button[@class='cp-control-panel-close cp-icon']")
         closebtn.click()
-        time.sleep(2)
+        time.sleep(3)
 
         wikilog.info("{} uploaded successfully".format(kpifile))
 
@@ -532,6 +561,8 @@ def update_kpi_page(browser, kpi, linktext, wikitype):
     if not navigate_to_kpi(browser, linktext, wikitype):
         wikilog.error("No kpis updated for {0} - {1}".format(linktext, kpi))
         return False
+
+    #return True     # FOR TEST PURPOSES ONLY!!!!
     
     try:
         
@@ -584,16 +615,29 @@ def main(wikitype):
         kpi_url = config.autokpi["wikiLive"]
 
     try:
-        wikilog.info("Start Wiki upload....")
+        wikilog.info("Start Wiki upload: {}....".format(kpi_url))
+
+        # start headless browser
+        xvfb = Xvfb(width=1280, height=720)
+        xvfb.start()
+        
         browser = get_wikipage(kpi_url)
 
         if not browser:
+            xvfb.stop()
             sys.exit(-1)
 
         # validate login credentials
         if log_into_wiki(browser, auth_user, auth_pwd):
 
+            # get kpi page links
             kpilinks = get_config_linktext()
+            if wikitype == 'Test':
+                kpilinks['Dashboard'] = "Test Dashboard KPIs"
+            else:
+                kpilinks['Dashboard'] = "Dashboard KPIs"
+
+            # get updated kpi chart text  
             by_month_text, by_fyq_text, end_month = get_kpi_text_update()
 
             wikilog.debug("Months: {0}; FYQs: {1} End Month: {2}".format(by_month_text, by_fyq_text, end_month))
@@ -608,13 +652,17 @@ def main(wikitype):
 
                     browser.refresh()
                     time.sleep(2)
-                    
+
+                #break      # FOR TESTING PURPOSES ONLY!!!
+                
 
     except Exception as e:
         wikilog.error("Exception: {}".format(str(e)))
 
 
     finally:
+        xvfb.stop()
+        
         if browser:
             browser.quit()
 
@@ -629,17 +677,20 @@ def main(wikitype):
 if __name__ == "__main__":
    
     parser = argparse.ArgumentParser()
-    parser.add_argument("-test", type=str, help="Y/N/blank to indicate if script to run against test wikipage")
+    parser.add_argument("-test", type=str, help="'Y' to indicate script is to run against 'Test' wikipage; 'N' otherwise (required)")
     args = parser.parse_args()
 
     wikitype = ''
     
     # Validate parameter
-    if args.test:
+    if args.test is None:
+        print("'-test' parameter (Y/N) is required!")
+        
+    else:
         if args.test.upper() == 'Y':
             wikitype = 'Test'
 
-    main(wikitype)
+        main(wikitype)
 
-    wikilog.info("")
-    wikilog.info("Finished!!")
+        wikilog.info("")
+        wikilog.info("Finished!!")

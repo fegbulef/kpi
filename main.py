@@ -121,6 +121,11 @@ def main(kpi_dict, importfromxl):
     fyq_start, fyq_end = util.get_kpi_fyq_start_end(None, None) # use default dates
     months_fyq_df = dataprep.get_plot_months(fyq_start, fyq_end)
 
+    # set var to determine if at end of current fyq
+    end_fyq = False
+    if util.is_fyq_start(fyq_end):
+        end_fyq = True
+
     # Process each tool/kpi combination
     for tool, kpis in kpi_dict.items():
         import_df = None
@@ -168,6 +173,8 @@ def main(kpi_dict, importfromxl):
                 else:       # management
                     product_code = 'CMM'
 
+                if kpi == 'CFPD' and product_code == 'CMM':     # ignore CMM for CFPD ??
+                    continue
 
                 df_product = dataprep.get_product_data(df_reformat, product, toolcfg, kpi)           
                 if df_product is None:
@@ -179,6 +186,7 @@ def main(kpi_dict, importfromxl):
                 # get mttr days
                 kpilog.debug("1. Calculate MTTR days....")
                 mttr_df = dataprep.get_mttr_days(df_product, months_fyq_df, toolcfg)
+
                 # get open/closed counts
                 kpilog.debug("2. Get open/closed counts....")
                 df_open_grp, df_closed_grp = dataprep.get_product_counts(df_product)
@@ -186,9 +194,10 @@ def main(kpi_dict, importfromxl):
                 # merge open/closed counts
                 kpilog.debug("3. Merge open/closed/mttr data....")
                 df_plot_data = dataprep.get_plot_data(df_open_grp, df_closed_grp, mttr_df, months_fyq_df)
+    
                 # perform mttr calc
                 kpilog.debug("4. Perform MTTR calcs....")
-                mttr_calcs = dataprep.get_mttr_calcs(df_plot_data)
+                mttr_calcs = dataprep.get_mttr_calcs(df_plot_data, product_code)
 
                 #***********************
                 # Monthly Product chart
@@ -198,10 +207,10 @@ def main(kpi_dict, importfromxl):
 
                 kpilog.debug("5. Prepare monthly data and chart....")
                 df_product_by_month = dataprep.group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df)
-                
+
                 chart_title = str.join(' ', [kpi_title.replace('XXX', product_code), 'Month\n'])
                 kpi_chart = plotkpi.plot_kpi_chart(df_product_by_month, product_code, chart_title, kpi, xaxis)
-                
+
                 if kpi_chart:            
                     kpilog.info("Monthly chart created: {}".format(kpi_chart))
 
@@ -213,26 +222,29 @@ def main(kpi_dict, importfromxl):
                     xaxis = 'FYQ'
 
                     kpilog.debug("6. Prepare FYQ data and chart....")
-                    df_product_by_fyq = dataprep.group_counts_by_fyq(df_plot_data, mttr_calcs)
+                    df_product_by_fyq = dataprep.group_counts_by_fyq(df_plot_data, mttr_calcs, end_fyq)
 
                     chart_title = chart_title.replace('Month', 'Financial Quarter')
                     kpi_chart = plotkpi.plot_kpi_chart(df_product_by_fyq, product_code, chart_title, kpi, xaxis)
 
-                if kpi_chart:            
-                    kpilog.info("FYQ chart created: {}".format(kpi_chart))
+                    if kpi_chart:            
+                        kpilog.info("FYQ chart created: {}".format(kpi_chart))
+
             
-                # calculate totals
+                # store totals
                 if all_products == []:
-                    df_all_by_month = df_product_by_month
-                    if plot_fyq:
-                        df_all_by_fyq = df_product_by_fyq
-        
-                else:
-                    columnlist = ["OpenCnt", "ClosedCnt", "OpenDefects","MTTR"]
-                    df_all_by_month = sum_df_columns(df_all_by_month, df_product_by_month, columnlist)
-                    if plot_fyq:
-                        df_all_by_fyq = sum_df_columns(df_all_by_fyq, df_product_by_fyq, columnlist)
                     
+                    df_all_mttr = mttr_df
+                    df_all_months = df_plot_data
+            
+                else:
+
+                    columnlist = ["OpenCnt", "ClosedCnt", "OpenDefects"]
+
+                    df_all_months = sum_df_columns(df_all_months, df_plot_data, columnlist)
+                    df_all_mttr.MTTR += mttr_df.MTTR
+                    
+
                 all_products.append(product_code)
 
 
@@ -242,33 +254,49 @@ def main(kpi_dict, importfromxl):
         
             if not all_products == []:
             
+                # perform mttr calc for al months
+                kpilog.debug("7. Perform All MTTR calcs....")
+                df_all_months = dataprep.merge_mttr(df_all_months, df_all_mttr, True)
+                mttr_calcs = dataprep.get_mttr_calcs(df_all_months)
+
                 product_str = str.join(', ', all_products)
+
 
                 #****************************
                 # All Products Monthly chart
                 #****************************
 
-                kpilog.debug("7. Chart All monthly....")
+                kpilog.debug("8. Group all by month....")
+                df_all_by_month = dataprep.group_counts_by_month(df_all_months, mttr_calcs, months_to_plot_df)
+               
+                kpilog.debug("9. Chart All monthly....")
                 
                 chart_title = str.join(' ', [kpi_title.replace('XXX', product_str), 'Month\n'])
+
                 kpi_chart = plotkpi.plot_kpi_chart(df_all_by_month, product_str, chart_title, kpi, 'AllMonths')
                 if kpi_chart:            
                     kpilog.info("All Months chart created: {}".format(kpi_chart))
-            
+
+                
                 #****************************
                 # All Products FYQ chart
                 #****************************
 
                 if plot_fyq:
+                    kpilog.debug("10. Group all by FYQ....")
+                    df_all_by_fyq = dataprep.group_counts_by_fyq(df_all_months, mttr_calcs, end_fyq)
 
-                    kpilog.debug("8. Chart All FYQ....")
+                    kpilog.debug("11. Chart All FYQ....")
                     
                     chart_title = chart_title.replace('Month', 'Financial Quarter')
+
                     kpi_chart = plotkpi.plot_kpi_chart(df_all_by_fyq, product_str, chart_title, kpi, 'AllFYQ')
                     if kpi_chart:            
                         kpilog.info("All FYQ chart created: {}".format(kpi_chart))
+            
         
     return None
+
 
 
 #*************#

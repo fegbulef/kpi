@@ -17,7 +17,6 @@ import pytest
 
 from jira import JIRA
 from datetime import datetime
-from selenium import webdriver
 
 # user defined modules
 import util
@@ -25,7 +24,6 @@ import config
 import importdata
 import dataprep
 import plotkpi
-import wikiexport
 
 
 #******************
@@ -68,8 +66,8 @@ CFPD_plot_data = os.path.join(CWD, "test_data", "CFPD_plot_data.csv")
 # 1. Validate kpi codes input 
 def test_get_kpi_codes():
 #---------------------------------------------------------
-    kpi_dict = util.get_kpi_codes(['IFD','PSIRT','CDETS','AllCFD'])
-    assert kpi_dict == {'JIRA': ['IFD','AllCFD'], 'CDETS': ['PSIRT']}
+    kpi_dict = util.get_kpi_codes(['IFD','PSIRT','CDETS','CFD', 'ACANO'])
+    assert kpi_dict == {'JIRA': ['IFD','CFD'], 'CDETS': ['PSIRT'], 'ACANO': ['ATC']}
     
 
 #---------------------------------------------------------
@@ -274,7 +272,9 @@ def test_fyq_kpi_chart():
     mttr_calcs = pd.read_csv(CFPD_mttr_calcs)    
     months_df = pd.DataFrame(test_months)
 
-    plot_by_fyq = dataprep.group_counts_by_fyq(plot_df, mttr_calcs)
+    # only report current fyq if at end  
+    end_fyq = util.is_fyq_start(END_DT)
+    plot_by_fyq = dataprep.group_counts_by_fyq(plot_df, mttr_calcs, end_fyq)
 
     if isinstance(plot_by_fyq, pd.DataFrame):
         assert(len(plot_by_fyq) > 0)
@@ -283,27 +283,4 @@ def test_fyq_kpi_chart():
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
-
-
-#---------------------------------------------------------
-# 11. Test upload to confluence
-#@pytest.mark.skip(reason="Under review")
-def test_wikiexport():
-#---------------------------------------------------------
-    url = config.autokpi["wikiLive"]
-    user = config.autokpi["auth"]["user"]
-    pwd = config.autokpi["auth"]["password"]
-
-    try:
-
-        # check url is valid
-        browser = wikiexport.get_wikipage(url)
-        assert not browser is None
         
-        # check auth credentials are valid
-        assert wikiexport.log_into_wiki(browser, user, pwd) == True
-
-    finally:
-        
-        browser.quit()
-    
