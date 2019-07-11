@@ -296,13 +296,8 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         max_mttr = ax2_ylim
 
-<<<<<<< HEAD
-        if ax2_ylim > 700:
-            max_mttr = 700  
-=======
         if ax2_ylim > 600:
             max_mttr = 600  
->>>>>>> autokpi_release
                 
         ax2.set_ylim(bottom=0, top=max_mttr)
  
