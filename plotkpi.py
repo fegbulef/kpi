@@ -244,9 +244,11 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
        
         ax1.yaxis.set_major_formatter(ticker.FormatStrFormatter("%d"))
         if ax1_ylim <= 10:
+            ax1_ylim = 10     # set as min "max value"
             ax1_ylim = round(ax1_ylim)
             ax1.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
+        #if ax1_ylim == 0: ax1_ylim = 1
         ax1.set_ylim(bottom=0, top=ax1_ylim)
  
         for t in ax1.yaxis.get_majorticklabels():
@@ -294,8 +296,13 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
 
         max_mttr = ax2_ylim
 
+<<<<<<< HEAD
         if ax2_ylim > 700:
             max_mttr = 700  
+=======
+        if ax2_ylim > 600:
+            max_mttr = 600  
+>>>>>>> autokpi_release
                 
         ax2.set_ylim(bottom=0, top=max_mttr)
  

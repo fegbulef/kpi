@@ -36,10 +36,27 @@ from dateutil.relativedelta import relativedelta
 
 
 #------------------------------------------------------------------------
+# Return True/False if reporting end of FYQ 
+#------------------------------------------------------------------------
+def is_fyq_start(dt):
+
+    fyqs = config.autokpi["fyq"]
+
+    dt_month = datetime.strftime(dt, format="%b")
+
+    # if end date is in first quarter month
+    if dt_month.upper() in [fyqs["Q1"][0], fyqs["Q2"][0], fyqs["Q3"][0], fyqs["Q4"][0]]:
+        return True
+    
+    return False
+
+
+#------------------------------------------------------------------------
 # Return a date given start date and number of months and/or days to add 
 # - returns date 
 #------------------------------------------------------------------------
 def get_next_date(dt, months, days):
+
     next_dt = dt
     
     if abs(months) != 0:
@@ -98,7 +115,7 @@ def get_kpi_fyq_start_end(start_dt, end_dt):
 
     if end_dt is None:      # default to end of next month
         dt = date.today()
-        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 2, -1)
+        end_dt = get_next_date(datetime(dt.year, dt.month, 1), 1, -1)
 
     if start_dt is None:    # default from config
         fyq_start = config.autokpi["fyq_start"].split('/')

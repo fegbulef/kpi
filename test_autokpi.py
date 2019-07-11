@@ -272,7 +272,9 @@ def test_fyq_kpi_chart():
     mttr_calcs = pd.read_csv(CFPD_mttr_calcs)    
     months_df = pd.DataFrame(test_months)
 
-    plot_by_fyq = dataprep.group_counts_by_fyq(plot_df, mttr_calcs)
+    # only report current fyq if at end  
+    end_fyq = util.is_fyq_start(END_DT)
+    plot_by_fyq = dataprep.group_counts_by_fyq(plot_df, mttr_calcs, end_fyq)
 
     if isinstance(plot_by_fyq, pd.DataFrame):
         assert(len(plot_by_fyq) > 0)

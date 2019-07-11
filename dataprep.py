@@ -30,8 +30,11 @@ from dateutil.relativedelta import relativedelta
 import util
 import config   
 
-kpilog = util.get_logger(config.autokpi["logname"])
 
+# set CMM release date
+CMM_RELDATE = pd.to_datetime("31/07/2017", format="%d/%m/%Y").date()
+
+kpilog = util.get_logger(config.autokpi["logname"])
 
 
 #-----------------------------------------------
@@ -154,8 +157,7 @@ def get_mttr_days(df, months_fyq_df, toolcfg):
             
 
     mttr_df["MTTR"] = df_calc
-
-    #kpilog.debug("Mttr:\n {0}".format(mttr_df.info()))
+    
     
     return mttr_df
             
@@ -165,13 +167,15 @@ def get_mttr_days(df, months_fyq_df, toolcfg):
 # Calculations are based on a period of 3 months after the first 2 months calculations
 # - returns DataFrame structure
 #---------------------------------------------------------------------------------------
-def get_mttr_calcs(df):
+def get_mttr_calcs(df, pcode=None):
 
     mttr_calc = [0] * len(df)
 
     days = 0
     mttr = 0
     closed_cnt = 0
+
+    mttridx = 0
     
     for i in df.index:
         data = df[df.Months == df.Months[i]]
@@ -179,24 +183,31 @@ def get_mttr_calcs(df):
 
         month_start, month_end = util.get_month_start_end(data.iloc[0].Months)
 
+        # for CMM, start mttr calc from release date
+        if pcode == 'CMM':
+            if month_start < CMM_RELDATE: continue
+       
         # sum values rolling forward
         days += (month_end - month_start).days
         closed_cnt += data.iloc[0].ClosedCnt
         mttr += data.iloc[0].MTTR
 
         # remove calculations of 4th month after each 3 month period
-        if i > 2:
+        if i > 2 and mttridx > 2:
             dfx = df.iloc[i-3]
             start, end = util.get_month_start_end(dfx.loc["Months"])
             days -= (end - start).days
             closed_cnt -= dfx.loc["ClosedCnt"]
             mttr -= dfx.loc["MTTR"]
 
+        mttridx += 1
+            
         # calculate mttr
         if closed_cnt == 0:
             mttr_calc[i] = round(mttr * days)
         else:
             mttr_calc[i] = round(mttr / closed_cnt)
+
 
     # update MTTR column with calculated values
     df_updated = df[["Months","FYQ"]]
@@ -205,7 +216,6 @@ def get_mttr_calcs(df):
     if 'index' in df_updated.columns:
         df_updated.drop('index', axis=1, inplace=True)    # index column created by assign
 
-    #kpilog.debug("MTTR Calcs:\n {0}".format(df_updated))
     
     return df_updated
 
@@ -234,6 +244,7 @@ def get_mttr_fyq(df):
     mttr_fyq_df["MTTR"] = list(mttr.values())
 
     mttr_fyq_df.set_index("FYQ", inplace=True)
+
     
     return mttr_fyq_df
             
@@ -252,6 +263,7 @@ def get_open_defects_count(df):
             df_open_defects[i] = cnt
         else:
             df_open_defects[i] = df_open_defects[i-1]+cnt
+
       
     return df_open_defects
             
@@ -270,6 +282,7 @@ def get_product_data(df, product, toolcfg, kpi):
     if df_product.empty:
         return None    # no data for product
 
+ 
     return df_product
             
 
@@ -285,7 +298,30 @@ def get_product_counts(df):
     df_closed_grp = df[["ClosedMonth"]].groupby(["ClosedMonth"]).size().reset_index(name='ClosedCnt')
     df_closed_grp.set_index('ClosedMonth', inplace=True)
 
+
     return df_open_grp, df_closed_grp
+
+
+#--------------------------------------------------
+# Merge MTTR plot data
+# - returns DataFrame structure
+#--------------------------------------------------
+def merge_mttr(df, mttr_df, mttrAll=False):
+
+    if mttrAll:
+        df.drop('MTTR', axis=1, inplace=True) 
+        
+    mttr_df.reset_index(inplace=True)
+    mttr_df.set_index('Months', inplace=True)
+    
+    df_merged = pd.merge(df[["FYQ", "Months", "OpenCnt", "ClosedCnt", "OpenDefects"]],
+                            mttr_df["MTTR"],
+                            on="Months")
+
+    df_merged.reset_index(inplace=True)
+
+
+    return df_merged
 
 
 #--------------------------------------------------
@@ -316,18 +352,15 @@ def get_plot_data(df_open_grp, df_closed_grp, mttr_df, months_fyq_df):
     # set open/closed count to zero if null
     df_grouped['OpenCnt'].fillna(0, inplace=True)
     df_grouped['ClosedCnt'].fillna(0, inplace=True)
-    
-    # get mttr summary
-    mttr_df.reset_index(inplace=True)
-    mttr_df.set_index('Months', inplace=True)
-    
-    df_plot_data = pd.merge(df_grouped[["FYQ", "Months", "OpenCnt", "ClosedCnt"]],
-                            mttr_df["MTTR"],
-                            on="Months")
 
-    df_plot_data.reset_index(inplace=True)
+    # get open defects
+    opendefects = get_open_defects_count(df_grouped)
+    df_grouped = df_grouped.assign(OpenDefects=opendefects)
    
-    #kpilog.debug("Plot Data:\n {0}".format(df_plot_data.info()))
+    # get mttr summary
+    df_plot_data = merge_mttr(df_grouped, mttr_df)
+
+    #print("Plot Data:\n", df_plot_data)
     
     return df_plot_data
 
@@ -338,11 +371,8 @@ def get_plot_data(df_open_grp, df_closed_grp, mttr_df, months_fyq_df):
 #--------------------------------------------------
 def group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df):
   
-    # get open defects
-    opendefects = get_open_defects_count(df_plot_data)
-    df_data = df_plot_data.assign(OpenDefects=opendefects)
-
-    df_data = df_data.assign(MTTR=mttr_calcs.MTTR)
+    # assign MTTR calcs
+    df_data = df_plot_data.assign(MTTR=mttr_calcs.MTTR)
     if 'index' in df_data.columns:
         df_data.drop('index', axis=1, inplace=True)    # index column created by assign
     
@@ -356,6 +386,7 @@ def group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df):
     # drop all null rows
     df_product_by_month.reset_index(inplace=True)
     df_product_by_month.dropna(inplace=True)
+
    
     return df_product_by_month
                         
@@ -364,7 +395,7 @@ def group_counts_by_month(df_plot_data, mttr_calcs, months_to_plot_df):
 # Group plot data by FYQ
 # - returns DataFrame structure 
 #-------------------------------------------------------
-def group_counts_by_fyq(df_plot_data, mttr_calcs):
+def group_counts_by_fyq(df_plot_data, mttr_calcs, end_fyq):
 
     # get raw mttr base calcs
     mttr_fyq = get_mttr_fyq(mttr_calcs)
@@ -373,7 +404,7 @@ def group_counts_by_fyq(df_plot_data, mttr_calcs):
     df_grouped = df_plot_data.groupby(["FYQ"])["OpenCnt","ClosedCnt"].sum()
     df_grouped.reset_index(inplace=True)
 
-    # get open defects
+    # recalc open defects
     opendefects = get_open_defects_count(df_grouped)
     df_grouped = df_grouped.assign(OpenDefects=opendefects)
 
@@ -393,6 +424,11 @@ def group_counts_by_fyq(df_plot_data, mttr_calcs):
     df_product_by_fyq['MTTR'].fillna(0, inplace=True)
     df_product_by_fyq.reset_index(inplace=True)
     df_product_by_fyq.dropna(inplace=True)
+
+    # only report current fyq if at end  
+    if not end_fyq:
+        df_product_by_fyq = df_product_by_fyq.head(-1)
+
     
     return df_product_by_fyq
 

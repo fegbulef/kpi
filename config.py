@@ -16,8 +16,8 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "logfile": "kpilog.log",
            "logname": "autokpi",
 
-           "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/KPIs",
-           "wikiTest": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Test+KPIs+Page",
+           "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Dashboard+KPIs",
+           "wikiTest": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Test+Dashboard+KPIs",
            "wikilogin": r"https://jira-eng-gpk2.cisco.com/jira/login.jsp",
            
            "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
