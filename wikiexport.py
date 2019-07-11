@@ -139,10 +139,15 @@ def get_kpi_text_update():
     by_month_text = ' '.join(['from', firstdt, 'to', lastdt])
 
     # construct 'by fyq' text
-    start_dt, end_dt = util.get_kpi_fyq_start_end(None, None) # default to current run dates
+    start_dt, end_dt = util.get_kpi_fyq_start_end(None, None)   # default to current run dates
     months = util.get_kpi_months(start_dt, end_dt)
     fyq = util.get_month_fyq(months)
-    
+
+    fyq = list(set(fyq))                # get distinct values
+    fyq.sort()
+    if not util.is_fyq_start(end_dt):   # not reporting at start of fyq
+        fyq = fyq[:-1]
+
     first_fyq, last_fyq = fyq[0], fyq[-1]
 
     by_fyq_text = ' '.join(['from', first_fyq, 'to', last_fyq])
