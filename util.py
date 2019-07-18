@@ -130,7 +130,7 @@ def get_kpi_fyq_start_end(start_dt, end_dt):
 
     if qtrs > 0:
         months_to_add = 3 * (qtrs if qtrs >= 1 else 1)
-        start_dt = util.get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
+        start_dt = get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), months_to_add, 0)
 
 
     return start_dt, end_dt
