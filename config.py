@@ -11,7 +11,7 @@ Description:  Configuration setup for tools and codes used in KPI automation.
 ************************************************************************************"""
 
 
-autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # authorised user
+autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # authorised user
 
            "logfile": "kpilog.log",
            "logname": "autokpi",
@@ -34,7 +34,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
            "fyqs_to_plot": 14,              
            "months_to_plot": -18,           
 
-           # KPI tools: JIRA - [CFPD, AFCD, AIFD]
+           # KPI tools: JIRA - [CFPD, AFCD, IFD]
            "tools": {"JIRA": {"apiserver": "https://jira-eng-gpk2.cisco.com/jira/",
                               
                               "products": ["CLIENT","SERVER","CMM"],
@@ -76,7 +76,7 @@ autokpi = {"auth": {"user": "fegbulef", "password": "cscApr2019?"},         # au
                               "xldatefmt": "%d/%m/%Y %H:%M:%S",
                               "apidatefmt": "%Y-%m-%dT%H:%M:%S"},
                      
-                     #  CDETS - [PSIRTS]
+                     #  CDETS - [PSIRT]
                      "CDETS": {"apiserver": "http://wwwin-metrics.cisco.com/cgi-bin/ws/ws_ddts_query_new.cgi?",
 
                                "products": ["meeting_apps","meetingserver","cmm"],
