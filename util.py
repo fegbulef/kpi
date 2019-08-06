@@ -7,11 +7,13 @@ Created date: 25 June 2019
 
 Description:  Generic script to store common modules:
 
+              - is_fyq_start(date)
               - get_next_date(date, +/-monthstoadd, +/-daystoadd)
               - get_month_start_end(monthyear)
               - get_kpi_months(start_dt, end_dt)
               - get_kpi_fyq_start_end(start_dt, end_dt)
               - get_month_fyq(months_df)
+              - get_kpi_codes(kpi_list)
               - setup_logger(logname, logfile)
               - get_logger(logname)
 
