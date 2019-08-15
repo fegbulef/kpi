@@ -48,28 +48,28 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                               "kpi": {"CFPD": {"wikitext": "Customer-Priority Found Defects",
                                                
                                                "kpi_title": "XXX Customer Found Priority Defects by",
-                                               "jql": '''project in (CMM, SERVER, CLIENT)
-                                                        AND issuetype = Bug
-                                                        AND labels = Customer_Priority
-                                                        AND created >= 2016-08-01'''},
+                                               "jql": "project in (CMM, SERVER, CLIENT) " \
+                                                        "AND issuetype = Bug " \
+                                                        "AND labels = Customer_Priority " \
+                                                        "AND created >= 2016-08-01"},
                                       
                                       "IFD": {"wikitext": "Internally Found Defects",
                                               
                                               "kpi_title": "Internally-Found XXX Defects per",
-                                              "jql": '''project in (CMM, SERVER, CLIENT)
-                                                        AND issuetype = Bug
-                                                        AND (labels = EMPTY OR labels != customer)
-                                                        AND created >= 2016-08-01
-                                                        ORDER BY created ASC, priority DESC, cf[10408] ASC, resolved DESC, assignee ASC'''},
+                                              "jql": "project in (CMM, SERVER, CLIENT) " \
+                                                        "AND issuetype = Bug " \
+                                                        "AND (labels = EMPTY OR labels != customer) " \
+                                                        "AND created >= 2016-08-01 " \
+                                                        "ORDER BY created ASC, priority DESC, cf[10408] ASC, resolved DESC, assignee ASC"},
                                       
                                       "CFD": {"wikitext": "Customer Found Defects",
 
                                                  "kpi_title": "XXX JIRA CFDs per",
-                                                 "jql": '''project in (CMM, SERVER, CLIENT)
-                                                            AND issuetype = Bug
-                                                            AND labels = customer
-                                                            AND created >= 2016-08-01
-                                                            ORDER BY created ASC, priority DESC, cf[10408] ASC, resolved DESC, assignee ASC'''}},
+                                                 "jql": "project in (CMM, SERVER, CLIENT) " \
+                                                        "AND issuetype = Bug " \
+                                                        "AND labels = customer " \
+                                                        "AND created >= 2016-08-01 " \
+                                                        "ORDER BY created ASC, priority DESC, cf[10408] ASC, resolved DESC, assignee ASC"}},
                               
                               "xlsheetname": "JIRA Engineering GPK2",
                               "xlcolumns": "A:H",
@@ -92,13 +92,15 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
 
                                                  "kpi_title": "XXX PSIRT Defects by",
                                                  
-                                                 "query": "expert=Project:CSC.general and PSIRT:Y and Product:meeting_apps,meetingserver,cmm and SIR:Critical,High,Medium,Low and Status:A,H,I,M,N,O,P,Q,R,S,T,V,W",
+                                                 "query": "expert=Project:CSC.general and PSIRT:Y " \
+                                                             "and Product:meeting_apps,meetingserver,cmm " \
+                                                             "and SIR:Critical,High,Medium,Low and Status:A,H,I,M,N,O,P,Q,R,S,T,V,W",
                                                  
                                                  "type": "&type=XXX",
                                                  
                                                  "fields": "&fields=Status,Priority,SIR,Product,Headline,OPENED,CLOSED",
                                                  
-                                                 "bugs": '''fileid=XXX&type=incr&start=ZZZ&numrec=100&fields=Product,SIR,Identifier,Status,OPENED,CLOSED'''}},
+                                                 "bugs": "fileid=XXX&type=incr&start=ZZZ&numrec=100&fields=Product,SIR,Identifier,Status,OPENED,CLOSED"}},
 
                                "xlsheetname": "PSIRT",
                                "xlcolumns": "A:J",
@@ -124,8 +126,42 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
 
                                                "query": "schedule=XXX&sort(-id)"}},
                             
-                               "apidatefmt": "%Y-%m-%dT%H:%M:%S.%f"}
-                     
+                               "apidatefmt": "%Y-%m-%dT%H:%M:%S.%f"},
+
+##                     #  BEMS - [Escalations]
+##                     "BEMS": {"conn_str": "{user}/{pwd}@{host}:{port}/{service}",
+##
+##                              "conn_parms": {"user": "BEMS_Query", "pwd": "BEMS_query_227", "host": "173.37.249.61", "port": "1541", "service": "RPAPPPRD.cisco.com"},
+##
+##                              "columns": ["CASE_NUMBER", "ENGAGEMENT_ID", "ENGAGEMENT_STATUS", "PRODUCT", "PRODUCT_FAMILY", "CREATE_DATE", "CLOSED_DATE"],
+##
+##                              "open_column": "CREATE_DATE",      # columns for date filtering
+##                              "closed_column": "CLOSED_DATE",  #
+##
+##                              "product_column": "PRODUCT",
+##
+##                              "products": {"CMA": ["ACANO iOS Client","ACANO PC/MAC Client","Acano webRTC client"],
+##                                           "CMS": ["Cisco Meeting Server (CMS)"],
+##                                           "CMM": ["CMM (Meeting Management)"]},
+##
+##                              "kpi": {"BEMS": {"wikitext": "Escalations",
+##
+##                                               "kpi_title": "Infrastructure Service Requests (SRs), by XXX",
+##
+##                                               "arraysize": 5000,
+##
+##                                               "query": "SELECT CASE_NUMBER, ENGAGEMENT_ID, ENGAGEMENT_STATUS, PRODUCT, PRODUCT_FAMILY, " \
+##                                                               "CREATE_DATE, CLOSED_DATE " \
+##                                                        "FROM BEMS_ENGAGEMENT_DETAILS_VW " \
+##                                                        "WHERE INSTR(CASE_NUMBER, 'BEMS') > 0 " \
+##                                                        "AND (CREATE_DATE > TO_DATE('07/31/2016', 'MM/DD/YYYY') " \
+##                                                               "AND CREATE_DATE < TO_DATE('XXX', 'MM/DD/YYYY')) " \
+##                                                        "AND (INSTR(PRODUCT_FAMILY, 'CTS - Conferencing') > 0 OR INSTR(PRODUCT_FAMILY, 'Acano') > 0 "  \
+##                                                               "OR (INSTR(PRODUCT, 'CMM') > 0 AND INSTR(PRODUCT_FAMILY, 'CTS - Management') > 0)) " \
+##                                                        "ORDER BY CREATE_DATE "}},
+##                            
+##                              "apidatefmt": "%Y-%m-%d %H:%M:%S.%f"}
+##                     
                      }
            }
 
