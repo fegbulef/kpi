@@ -15,6 +15,7 @@ import os
 import sys
 import json
 import requests
+import cx_Oracle
 
 # user defined module
 import util
@@ -50,7 +51,6 @@ class OracleDB:
     def __init__(self, toolcfg):
         try:
             os.chdir(toolcfg["oracle_dir"])
-            import cx_Oracle
             conn_str = toolcfg["conn_str"].format(**toolcfg["conn_parms"])
             self.conn = cx_Oracle.connect(conn_str)
             kpilog.info("Oracle DB Connection Status: OK")
