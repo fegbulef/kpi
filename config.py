@@ -13,7 +13,7 @@ Description:  Configuration setup for tools and codes used in KPI automation.
 
 autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # authorised user
 
-           "logfile": "pyout/kpilog.log",
+           "logfile": r"pyout/kpilog.log",
            "logname": "autokpi",
 
            "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Dashboard+KPIs",
@@ -23,7 +23,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
            "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
                    "Q3": ["FEB","MAR","APR"], "Q4": ["MAY","JUN","JUL"]},
 
-           "datadir": "/kpi/data",       
+           "datadir": r"/kpi/data",       
            "savedir": "pyout",
            "fontdir": "CiscoFonts", 
 
@@ -35,7 +35,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
            "months_to_plot": -18,           
 
            # KPI tools: JIRA - [CFPD, AFCD, IFD]
-           "tools": {"JIRA": {"apiserver": "https://jira-eng-gpk2.cisco.com/jira/",
+           "tools": {"JIRA": {"apiserver": r"https://jira-eng-gpk2.cisco.com/jira/",
                               
                               "products": ["CLIENT","SERVER","CMM"],
                               "product_column": "Issue key",
@@ -77,7 +77,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                               "apidatefmt": "%Y-%m-%dT%H:%M:%S"},
                      
                      #  CDETS - [PSIRT]
-                     "CDETS": {"apiserver": "http://wwwin-metrics.cisco.com/cgi-bin/ws/ws_ddts_query_new.cgi?",
+                     "CDETS": {"apiserver": r"http://wwwin-metrics.cisco.com/cgi-bin/ws/ws_ddts_query_new.cgi?",
 
                                "products": ["meeting_apps","meetingserver","cmm"],
                                "product_column": "Product",
@@ -108,7 +108,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                                "apidatefmt": "%y%m%d %H%M%S"},
 
                      #  ACANO - [ATC]
-                     "ACANO": {"apiserver": "https://atc.uxb.ciscolabs.com/api/batch/?",
+                     "ACANO": {"apiserver": r"https://atc.uxb.ciscolabs.com/api/batch/?",
 
                                "user": "KPI",
                                "password": "65wEv7u6sB",
@@ -129,7 +129,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                                "apidatefmt": "%Y-%m-%dT%H:%M:%S.%f"},
 
                      #  BEMS - [Escalations]
-                     "BEMS": {"oracle_dir": "/usr/lib/oracle/instantclient_19_3",
+                     "BEMS": {"oracle_dir": r"/usr/lib/oracle/instantclient_19_3",
 
                               "conn_str": "{user}/{pwd}@{host}:{port}/{service}",
 
