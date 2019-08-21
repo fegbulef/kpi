@@ -145,12 +145,7 @@ def test_import_from_acano_api():
 #@pytest.mark.skip(reason="Tested")
 def test_bems_import():
 #---------------------------------------------------------
-    bems = importdata.OracleDB(BEMSconfig)
-    # Oracle connection check
-    assert isinstance(bems, importdata.OracleDB)
-    
     bems_data = importdata.import_from_db(BEMSconfig, 'BEMS')
-    # Oracle data extract check
     assert len(bems_data) > 0
 
         
