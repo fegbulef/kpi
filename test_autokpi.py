@@ -23,6 +23,7 @@ import util
 import config
 import importdata
 import dataprep
+import swdlprep
 import plotkpi
 
 
@@ -33,6 +34,8 @@ import plotkpi
 JIRAconfig = config.autokpi["tools"]["JIRA"]
 CDETSconfig = config.autokpi["tools"]["CDETS"]
 ACANOconfig = config.autokpi["tools"]["ACANO"]
+BEMSconfig = config.autokpi["tools"]["BEMS"]
+SWDLconfig = config.autokpi["tools"]["SWDL"]
 
 USER = config.autokpi["auth"]["user"]
 PWD = config.autokpi["auth"]["password"]
@@ -89,48 +92,70 @@ def test_cdets_import_from_excel():
     assert isinstance(excel_df, pd.DataFrame)
     assert excel_df.columns.values.tolist() == ['Identifier','Status','SIR','Product','OPENED','CLOSED']
 
+
+#---------------------------------------------------------
+# 2.3 Check Excel file import: SWDL
+def test_swdl_import_from_excel():
+#---------------------------------------------------------
+    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    assert isinstance(excel_df, pd.DataFrame)
+
+    assert 'Download Date and Time'  in excel_df.columns.values.tolist()
+    assert 'Full File Name' in excel_df.columns.values.tolist()
+    assert 'Access Level Name' in excel_df.columns.values.tolist()
+
     
 #---------------------------------------------------------
-# 2.3 Check API import: JIRA
+# 2.4 Check API import: JIRA
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_jira_api():
 #---------------------------------------------------------
-    jira_api = importdata.get_jira_client(JIRAconfig, USER, PWD, 'CFPD')
+    jira_api = importdata.get_jira_client(JIRAconfig, 'CFPD')
     if jira_api:
         jira_df = importdata.get_jira_issues(JIRAconfig, jira_api, 'CFPD')
         assert len(jira_df) > 0
             
 
 #---------------------------------------------------------
-# 2.4 Check API import: CDETS (QDDTS)
+# 2.5 Check API import: CDETS (QDDTS)
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_qddts_webserver():
 #---------------------------------------------------------
-    qddts_json = importdata.get_qddts_data(CDETSconfig, 'PSIRT')
+    qddts_json = importdata.get_api_data(CDETSconfig, 'PSIRT')
     if qddts_json:
-        results = importdata.process_qddts_results(CDETSconfig, qddts_json)
+        results = importdata.import_qddts_results(CDETSconfig, qddts_json)
         assert len(results) > 0
     
 
 #---------------------------------------------------------
-# 2.5 Check API import: ACANO
+# 2.6 Check API import: ACANO
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_acano_api():
 #---------------------------------------------------------
-    user = ACANOconfig["user"]
-    pwd = ACANOconfig["password"]
-
     parms = '2'     # VM Server
-
-    acano_json = importdata.get_acano_schedule(ACANOconfig, user, pwd, 'ATC', parms)
+    acano_json = importdata.get_api_data(ACANOconfig, 'ATC', parms)
 
     if acano_json:
-        results = importdata.import_acano_schedule(ACANOconfig, acano_json)
+        results = importdata.import_acano_results(ACANOconfig, acano_json)
         assert len(results) > 0
 
     
 #---------------------------------------------------------
-# 3. Reformat import dates 
+# 2.7 Check DB import: BEMS
+#@pytest.mark.skip(reason="Tested")
+def test_bems_import():
+#---------------------------------------------------------
+    bems = importdata.OracleDB(BEMSconfig)
+    # Oracle connection check
+    assert isinstance(bems, importdata.OracleDB)
+    
+    bems_data = importdata.import_from_db(BEMSconfig, 'BEMS')
+    # Oracle data extract check
+    assert len(bems_data) > 0
+
+        
+#---------------------------------------------------------
+# 3.1 Reformat import dates 
 def test_reformat_import_dates():
 #---------------------------------------------------------
     import_df = pd.read_csv(CFPD_raw)   
@@ -144,7 +169,7 @@ def test_reformat_import_dates():
 
 
 #---------------------------------------------------------
-# 4. Get Open/closed counts
+# 3.2 Get Open/closed counts
 def test_open_closed_counts():
 #---------------------------------------------------------
 
@@ -166,7 +191,7 @@ def test_open_closed_counts():
     
 
 #---------------------------------------------------------
-# 5. Calculate MTTR days
+# 3.3 Calculate MTTR days
 #@pytest.mark.skip(reason="Tested")
 def test_mttr_days():
 #---------------------------------------------------------
@@ -184,7 +209,7 @@ def test_mttr_days():
 
 
 #---------------------------------------------------------
-# 6. MTTR calculations
+# 3.4 MTTR calculations
 #@pytest.mark.skip(reason="Tested")
 def test_mttr_calc():
 #---------------------------------------------------------
@@ -196,7 +221,7 @@ def test_mttr_calc():
     
 
 #---------------------------------------------------------
-# 7. Get plot months
+# 3.5 Get plot months
 #@pytest.mark.skip(reason="Tested")
 def test_get_plot_months():
 #---------------------------------------------------------
@@ -210,7 +235,7 @@ def test_get_plot_months():
 
 
 #---------------------------------------------------------
-# 8. Get plot FYQs
+# 3.6 Get plot FYQs
 #@pytest.mark.skip(reason="Tested")
 def test_get_plot_fyqs():
 #---------------------------------------------------------
@@ -234,9 +259,86 @@ def test_get_plot_fyqs():
     else:
         pytest.fail()
 
-        
+
 #---------------------------------------------------------
-# 9. Plot Monthly KPI chart
+# 3.7 Get filtered SWDL data
+#@pytest.mark.skip(reason="Tested")
+def test_filter_swdl():
+#---------------------------------------------------------
+    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    assert isinstance(excel_df, pd.DataFrame)
+    
+    if isinstance(excel_df, pd.DataFrame):
+        filtered_df = swdlprep.filter_swdl(excel_df)
+
+        # check additional columns added during filter function
+        assert 'DownloadFile' in filtered_df.columns
+        assert 'Product' in filtered_df.columns
+        assert 'DownloadMonth' in filtered_df.columns
+    
+        # check export file created
+        exportfile = os.path.join(os.getcwd(), config.autokpi["savedir"], "exportswdl.csv")
+        assert os.path.exists(exportfile)
+        
+    else:
+        pytest.fail()
+
+
+#---------------------------------------------------------
+# 3.8 Get SWDL data by product
+#@pytest.mark.skip(reason="Tested")
+def test_get_swdl_product():
+#---------------------------------------------------------
+    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    assert isinstance(excel_df, pd.DataFrame)
+    
+    if isinstance(excel_df, pd.DataFrame):
+        filtered_df = swdlprep.filter_swdl(excel_df)
+
+        # filter for 'CMM'
+        cmm1 = filtered_df[filtered_df.Product == 'CMM']
+        cmm2 = swdlprep.get_swdl_product(filtered_df, "CMM")
+
+        assert len(cmm1) == len(cmm2)
+        
+    else:
+        pytest.fail()
+
+                
+#---------------------------------------------------------
+# 3.9 Get SWDL grouped data by date
+#@pytest.mark.skip(reason="Tested")
+def test_get_swdl_grouped_data_by_date():
+#---------------------------------------------------------
+    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    assert isinstance(excel_df, pd.DataFrame)
+    
+    if isinstance(excel_df, pd.DataFrame):
+        filtered_df = swdlprep.filter_swdl(excel_df)
+
+        # check for 'CMA' 18M
+        cma = swdlprep.get_swdl_product(filtered_df, "CMA")
+        cma_grp = swdlprep.group_data_by_date(cma, '18M', 'CMA')
+
+        # check column names for CMA releases
+        for c in cma_grp.columns.values.tolist():
+            assert 'CMA' in c
+
+        # check min/max dates are 18M apart (incl.)
+        min_mth = cma_grp.index.values.tolist()[0]
+        max_mth = cma_grp.index.values.tolist()[-1]
+
+        start_dt = datetime.strptime("01-" + min_mth, "%d-%b-%Y")
+        dt = util.get_next_date(datetime(start_dt.year, start_dt.month, start_dt.day), 17, 0)
+
+        assert dt.strftime("%b-%Y") == max_mth
+
+    else:
+        pytest.fail()
+
+                
+#---------------------------------------------------------
+# 4.1 Plot Monthly KPI chart
 #@pytest.mark.skip(reason="Tested")
 def test_monthly_kpi_chart():
 #---------------------------------------------------------
@@ -260,7 +362,7 @@ def test_monthly_kpi_chart():
 
 
 #---------------------------------------------------------
-# 10. Plot FYQ KPI chart
+# 4.2 Plot FYQ KPI chart
 #@pytest.mark.skip(reason="Tested")
 def test_fyq_kpi_chart():
 #---------------------------------------------------------
@@ -283,4 +385,27 @@ def test_fyq_kpi_chart():
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
+
+
+#---------------------------------------------------------
+# 4.3 Plot SWDL KPI chart for CMS
+#@pytest.mark.skip(reason="Tested")
+def test_cms_swdl_kpi_chart():
+#---------------------------------------------------------
+    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    assert isinstance(excel_df, pd.DataFrame)
+    
+    if isinstance(excel_df, pd.DataFrame):
+        filtered_df = swdlprep.filter_swdl(excel_df)
+        CMS = swdlprep.get_swdl_product(filtered_df, "CMS")
+
+        # plot data
+        df_plot = swdlprep.group_data_by_date(CMS, "allW", "CMS")
+        kpi_chart = plotkpi.plot_swdl_chart(df_plot, "CMS", "allW", True)
+
+        assert 'png' in kpi_chart     # assert kpi_chart is a picture file
+        assert os.path.exists(kpi_chart)
+        
+    else:
+        pytest.fail()
         

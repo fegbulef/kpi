@@ -31,7 +31,7 @@ from xvfbwrapper import Xvfb
 
 
 # setup log
-wikilog = util.setup_logger("wikilog", "wikilog.log")
+wikilog = util.setup_logger("wikilog", "pyout/wikilog.log")
 
 
 #-----------------------------------------------
@@ -117,9 +117,15 @@ def get_config_linktext():
     
     for tool in config.autokpi["tools"]:
         kpis = config.autokpi["tools"][tool]["kpi"]
+
         for kpi in kpis:
-            kpilinks[kpi] = kpis[kpi]["wikitext"]
+            if kpi == 'SWDL':       # assign wikitext by product
+                for product in kpis[kpi]["wikitext"]:
+                    kpilinks[kpi + '_' + product] = kpis[kpi]["wikitext"][product]
+            else:
+                kpilinks[kpi] = kpis[kpi]["wikitext"]
             
+
     return kpilinks
 
 
@@ -155,6 +161,45 @@ def get_kpi_text_update():
     
         
     return by_month_text, by_fyq_text, lastdt
+
+
+#--------------------------------------------------------------------------
+# Get SWDL kpi text 
+# - returns dictionary of texts
+#--------------------------------------------------------------------------
+def get_swdl_kpi_text():
+
+    swdl_kpi_text = {}
+
+    # import swdl data
+    swdl = config.autokpi["tools"]["SWDL"]
+    xlfile = os.path.join(config.autokpi["datadir"], swdl["swdlfile"])
+    xlsheetname = swdl["xlsheetname"]
+    
+    swdl_df = util.get_xl_df(xlfile, xlsheetname)
+
+    if swdl_df is None:
+        wikilog.error("Unable to access SWDL data")
+        return None
+
+    # get df dates
+    start_dt, end_dt = util.get_df_start_end_dates(swdl_df, "Download Date and Time")
+   
+    # set period dates
+    mth = datetime.strftime(end_dt, "%B %Y")
+    swdl_kpi_text["End"] = mth   # End month
+    swdl_kpi_text["All"] = ''.join([" from August 2016 to ", swdl_kpi_text["End"], "."])    # All months from August 2016
+
+    dt = util.get_next_date(datetime(end_dt.year, end_dt.month, 1), -17, 0)
+    mth = datetime.strftime(dt, "%B %Y")
+    swdl_kpi_text["18"] = ''.join([" from ", mth, " to ", swdl_kpi_text["End"], "."])     # 18 months
+
+    dt = util.get_next_date(datetime(end_dt.year, end_dt.month, 1), -11, 0)
+    mth = datetime.strftime(dt, "%B %Y")
+    swdl_kpi_text["12"] = ''.join([" from ", mth, " to ", swdl_kpi_text["End"], "."])     # 12 months
+    
+        
+    return swdl_kpi_text
 
 
 #-------------------------------------------------------------
@@ -235,6 +280,15 @@ def get_kpifile(kpi, img_name):
            or (img_name in "CMA-IFD-Qtr.PNG" and file == "IFD_CMA_FYQ.png") \
            or (img_name in "CMM-IFD-Month.PNG" and file == "IFD_CMM_Months.png") \
            or (img_name in "CMM-IFD-Qtr.PNG" and file == "IFD_CMM_FYQ.png") \
+           or (img_name in "CMA-18M.PNG" and file == "SWDL_CMA_18M.png") \
+           or (img_name in "CMA-12W.PNG" and file == "SWDL_CMA_12W.png") \
+           or (img_name in "CMA-AllW.PNG" and file == "SWDL_CMA_allW.png") \
+           or (img_name in "CMS-18M.PNG" and file == "SWDL_CMS_18M.png") \
+           or (img_name in "CMS-12W.PNG" and file == "SWDL_CMS_12W.png") \
+           or (img_name in "CMS-AllW.PNG" and file == "SWDL_CMS_allW.png") \
+           or (img_name in "CMM-18M.PNG" and file == "SWDL_CMM_18M.png") \
+           or (img_name in "CMM-12W.PNG" and file == "SWDL_CMM_12W.png") \
+           or (img_name in "CMM-AllW.PNG" and file == "SWDL_CMM_allW.png") \
            or (img_name in ["ATC-ServerTests.PNG", "ATC-Tests.PNG"] and file == "ATC_ServerTests.png") \
            or (img_name in ["ATC-ServerPasses.PNG", "ATC.PNG"] and file == "ATC_ServerPasses.png") \
            or (img_name in ["ATC-%ServerPasses.PNG", "%ATC.PNG"] and file == "ATC_%ServerPasses.png") \
@@ -385,7 +439,7 @@ def update_kpi_panel_header(browser, kpi, end_month):
                     # panel header edit 
                     xpath = "/html/body/div[13]/div[2]/div/a[1]/span[2]"
                     try:
-                        panel_menu = WebDriverWait(browser, 5).until(EC.presence_of_element_located((By.XPATH, xpath)))
+                        panel_menu = WebDriverWait(browser, 8).until(EC.presence_of_element_located((By.XPATH, xpath)))
                         panel_menu.click()               
                         time.sleep(3)
 
@@ -439,14 +493,13 @@ def update_kpi_panel_header(browser, kpi, end_month):
 #-------------------------------------------------------------
 # Update text linked to each kpi to reflect current dates  
 #-------------------------------------------------------------
-def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month):
+def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month, swdl_kpi_text):
 
     blnCancel = False
     switch_to_frame = False
 
     try:
-
-         # place page in edit mode for update
+        # place page in edit mode for update
         editpage = browser.find_element_by_id("editPageLink")
         editpage.click()
         time.sleep(3)
@@ -475,18 +528,36 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
                 if not h3: continue
 
                 html = None
-                updtext = None
-            
-                if "by month" in h3.text:
-                    html = h3.get_attribute("innerHTML").split("by month")
-                    updtext = ''.join(["by month, ", by_month_text])
+                updtext = ""
 
-                elif "by financial quarter" in h3.text:
-                    html = h3.get_attribute("innerHTML").split("by financial quarter")
-                    updtext = ''.join(["by financial quarter, ", by_fyq_text])
-                
+                # setup kpi text with current dates
+                if "SWDL" in kpi:
+                    if "August" in h3.text:
+                        html = h3.get_attribute("innerHTML").split(",")
+                        updtext = ''.join([",", swdl_kpi_text["All"]])
+                       
+                    elif "18 months" in h3.text:
+                        html = h3.get_attribute("innerHTML").split("by month")
+                        updtext = ''.join(["by month,", swdl_kpi_text["18"]])
+                        
+                    elif "12 months" in h3.text:
+                        html = h3.get_attribute("innerHTML").split("by week")
+                        updtext = ''.join(["by week,", swdl_kpi_text["12"]])
+
+                    else:
+                        continue
+                        
                 else:
-                    continue
+                    if "by month" in h3.text:
+                        html = h3.get_attribute("innerHTML").split("by month")
+                        updtext = ''.join(["by month, ", by_month_text])
+
+                    elif "by financial quarter" in h3.text:
+                        html = h3.get_attribute("innerHTML").split("by financial quarter")
+                        updtext = ''.join(["by financial quarter, ", by_fyq_text])
+                
+                    else:
+                        continue
 
                 # update text
                 if html:
@@ -645,16 +716,23 @@ def main(wikitype):
 
             # get updated kpi chart text  
             by_month_text, by_fyq_text, end_month = get_kpi_text_update()
+            wikilog.debug("KPI Months: {0}; KPI FYQs: {1} KPI End Month: {2}".format(by_month_text, by_fyq_text, end_month))
 
-            wikilog.debug("Months: {0}; FYQs: {1} End Month: {2}".format(by_month_text, by_fyq_text, end_month))
-
+            # get updated swdl kpi chart text 
+            swdl_kpi_text = get_swdl_kpi_text()
+            wikilog.debug("SWDL KPI texts: {0}".format(swdl_kpi_text))
+            
             # loop through KPI page links
             for kpi, linktext in kpilinks.items():
 
+                if "SWDL" in kpi:
+                    if not swdl_kpi_text:
+                        continue
+                    
                 if update_kpi_page(browser, kpi, linktext, wikitype):                 
                     wikilog.info("{} kpis uploaded successfully".format(kpi))
 
-                    update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month)
+                    update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text, end_month, swdl_kpi_text)
 
                     browser.refresh()
                     time.sleep(2)

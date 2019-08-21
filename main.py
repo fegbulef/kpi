@@ -23,8 +23,9 @@ from datetime import datetime, date
 import util
 import config
 import importdata  
-import dataprep    
-import plotkpi      
+import dataprep
+import plotkpi
+import swdlprep    # Software Downloads
 
 
 kpilog = util.setup_logger(config.autokpi["logname"], config.autokpi["logfile"])
@@ -41,7 +42,7 @@ def clear_kpi_output():
     cwd = os.getcwd()
     output_dir = os.path.join(cwd, config.autokpi["savedir"])
 
-    kpis = [f for f in os.listdir(output_dir) if f.endswith(".png")]
+    kpis = [f for f in os.listdir(output_dir) if f.endswith(".png") or f.endswith(".csv")]
     
     for kpi in kpis:
         kpifile = os.path.join(output_dir, kpi)
@@ -105,6 +106,65 @@ def process_atc_schedules(toolcfg, tool, kpi):
     return None
 
 
+#------------------------------------------------------------
+# Format and sort BEMS data for Escalations KPI 
+# - returns None 
+#------------------------------------------------------------
+def process_bems_data(df, toolcfg, months_fyq_df, months_to_plot_df, kpi_title, end_fyq):
+
+    # get plot data
+    df_bems_plot_data = dataprep.get_bems_plot_data(df, toolcfg, months_fyq_df)
+
+    # plot data by month
+    df_bems_by_month = dataprep.group_bems_by_month(df_bems_plot_data, months_to_plot_df)
+    chart_title = kpi_title.replace('XXX', "Month")
+
+    chart_key = "ByMonth"
+    kpi_chart = plotkpi.plot_bems_chart(df_bems_by_month, chart_title, chart_key)
+    if kpi_chart:
+        kpilog.info("{0} {1} chart created: {2}".format("BEMS", chart_key, kpi_chart))
+
+    # plot data by FYQ
+    df_bems_by_fyq = dataprep.group_bems_by_fyq(df_bems_plot_data, end_fyq)
+    chart_title = kpi_title.replace('XXX', 'Quarter')
+
+    chart_key = "ByFYQ"
+    kpi_chart = plotkpi.plot_bems_chart(df_bems_by_fyq, chart_title, "ByFYQ")
+    if kpi_chart:
+        kpilog.info("{0} {1} chart created for {2}".format("BEMS", chart_key, kpi_chart))
+
+
+    return None
+
+
+#------------------------------------------------------------
+# Process Software Downloads from input data 
+# - returns None 
+#------------------------------------------------------------
+def process_swdl_data(df, toolcfg):
+
+    swdl_df = swdlprep.filter_swdl(df)
+
+    # Plot kpis by Product 
+    for product in toolcfg["products"]:
+        df_product = swdlprep.get_swdl_product(swdl_df, product)
+        
+        if df_product is None:
+            kpilog.warning("No Software Downloads data found for {}".format(product))
+            continue 
+
+        # plot kpi by period
+        for period in ['12W', '18M', 'allW']:
+            df_plot = swdlprep.group_data_by_date(df_product, period, product)
+  
+            kpi_chart = plotkpi.plot_swdl_chart(df_plot, product, period)
+            if kpi_chart:
+                kpilog.info("Chart created for {0} {1}: {2}".format(product, period, kpi_chart))
+
+
+    return None
+
+
 #-------------------------------------------------------------------
 # For each KPI code, import, filter and format data to plot charts
 # - returns None 
@@ -137,11 +197,16 @@ def main(kpi_dict, importfromxl):
             kpilog.debug("Selected - {}".format(kpi))
             plot_fyq = True
 
+            # call separate process for ATC
             if kpi == 'ATC':
                 process_atc_schedules(toolcfg, tool, kpi)
                 continue
-
+            
             if importfromxl:        # import data from (saved) excel workbook
+                import_df = importdata.import_from_excel(toolcfg, tool, kpi)
+            elif kpi == 'BEMS':     # import from Oracle DB
+                import_df = importdata.import_from_db(toolcfg, kpi)
+            elif kpi == 'SWDL':
                 import_df = importdata.import_from_excel(toolcfg, tool, kpi)
             else:                   # import data using tool api
                 import_df = importdata.import_from_api(toolcfg, tool, kpi)
@@ -150,13 +215,24 @@ def main(kpi_dict, importfromxl):
                 kpilog.warning("Could not import data for {0}: {1}".format(tool, kpi))
                 continue
 
+            # call separate process for SWDL (Software Downloads)
+            if kpi == 'SWDL':
+                process_swdl_data(import_df, toolcfg)
+                continue
+
             if kpi == 'PSIRT': plot_fyq = False
 
             # reformat dates
             df_reformat = dataprep.reformat_df_dates(import_df, toolcfg, importfromxl)
-                
+     
             # Set kpi chart text
             kpi_title = toolcfg["kpi"][kpi]["kpi_title"]
+
+            # call separate process for BEMS (Escalations)
+            if kpi == 'BEMS':
+                process_bems_data(df_reformat, toolcfg, months_fyq_df, months_to_plot_df, kpi_title, end_fyq)
+                continue
+
 
             # process data by project
             all_products = []

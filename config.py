@@ -13,7 +13,7 @@ Description:  Configuration setup for tools and codes used in KPI automation.
 
 autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # authorised user
 
-           "logfile": "kpilog.log",
+           "logfile": "pyout/kpilog.log",
            "logname": "autokpi",
 
            "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Dashboard+KPIs",
@@ -23,7 +23,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
            "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
                    "Q3": ["FEB","MAR","APR"], "Q4": ["MAY","JUN","JUL"]},
 
-           "datadir": "data",       
+           "datadir": "/kpi/data",       
            "savedir": "pyout",
            "fontdir": "CiscoFonts", 
 
@@ -128,40 +128,60 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                             
                                "apidatefmt": "%Y-%m-%dT%H:%M:%S.%f"},
 
-##                     #  BEMS - [Escalations]
-##                     "BEMS": {"conn_str": "{user}/{pwd}@{host}:{port}/{service}",
-##
-##                              "conn_parms": {"user": "BEMS_Query", "pwd": "BEMS_query_227", "host": "173.37.249.61", "port": "1541", "service": "RPAPPPRD.cisco.com"},
-##
-##                              "columns": ["CASE_NUMBER", "ENGAGEMENT_ID", "ENGAGEMENT_STATUS", "PRODUCT", "PRODUCT_FAMILY", "CREATE_DATE", "CLOSED_DATE"],
-##
-##                              "open_column": "CREATE_DATE",      # columns for date filtering
-##                              "closed_column": "CLOSED_DATE",  #
-##
-##                              "product_column": "PRODUCT",
-##
-##                              "products": {"CMA": ["ACANO iOS Client","ACANO PC/MAC Client","Acano webRTC client"],
-##                                           "CMS": ["Cisco Meeting Server (CMS)"],
-##                                           "CMM": ["CMM (Meeting Management)"]},
-##
-##                              "kpi": {"BEMS": {"wikitext": "Escalations",
-##
-##                                               "kpi_title": "Infrastructure Service Requests (SRs), by XXX",
-##
-##                                               "arraysize": 5000,
-##
-##                                               "query": "SELECT CASE_NUMBER, ENGAGEMENT_ID, ENGAGEMENT_STATUS, PRODUCT, PRODUCT_FAMILY, " \
-##                                                               "CREATE_DATE, CLOSED_DATE " \
-##                                                        "FROM BEMS_ENGAGEMENT_DETAILS_VW " \
-##                                                        "WHERE INSTR(CASE_NUMBER, 'BEMS') > 0 " \
-##                                                        "AND (CREATE_DATE > TO_DATE('07/31/2016', 'MM/DD/YYYY') " \
-##                                                               "AND CREATE_DATE < TO_DATE('XXX', 'MM/DD/YYYY')) " \
-##                                                        "AND (INSTR(PRODUCT_FAMILY, 'CTS - Conferencing') > 0 OR INSTR(PRODUCT_FAMILY, 'Acano') > 0 "  \
-##                                                               "OR (INSTR(PRODUCT, 'CMM') > 0 AND INSTR(PRODUCT_FAMILY, 'CTS - Management') > 0)) " \
-##                                                        "ORDER BY CREATE_DATE "}},
-##                            
-##                              "apidatefmt": "%Y-%m-%d %H:%M:%S.%f"}
-##                     
+                     #  BEMS - [Escalations]
+                     "BEMS": {"oracle_dir": "/usr/lib/oracle/instantclient_19_3",
+
+                              "conn_str": "{user}/{pwd}@{host}:{port}/{service}",
+
+                              "conn_parms": {"user": "BEMS_Query", "pwd": "BEMS_query_227", "host": "173.37.249.61", "port": "1541", "service": "RPAPPPRD.cisco.com"},
+
+                              "columns": ["CASE_NUMBER", "ENGAGEMENT_ID", "ENGAGEMENT_STATUS", "PRODUCT", "PRODUCT_FAMILY", "CREATE_DATE", "CLOSED_DATE"],
+
+                              "open_column": "CREATE_DATE",      # columns for date filtering
+                              "closed_column": "CLOSED_DATE",  #
+
+                              "product_column": "PRODUCT",
+
+                              "products": {"CMA": ["ACANO iOS Client","ACANO PC/MAC Client","Acano webRTC client"],
+                                           "CMS": ["Cisco Meeting Server (CMS)"],
+                                           "CMM": ["CMM (Meeting Management)"]},
+
+                              "kpi": {"BEMS": {"wikitext": "Escalations",
+
+                                               "kpi_title": "Infrastructure Service Requests (SRs), by XXX",
+
+                                               "arraysize": 5000,
+
+                                               "query": "SELECT CASE_NUMBER, ENGAGEMENT_ID, ENGAGEMENT_STATUS, PRODUCT, PRODUCT_FAMILY, " \
+                                                               "CREATE_DATE, CLOSED_DATE " \
+                                                        "FROM BEMS_ENGAGEMENT_DETAILS_VW " \
+                                                        "WHERE INSTR(CASE_NUMBER, 'BEMS') > 0 " \
+                                                        "AND (CREATE_DATE > TO_DATE('07/31/2016', 'MM/DD/YYYY') " \
+                                                               "AND CREATE_DATE < TO_DATE('XXX', 'MM/DD/YYYY')) " \
+                                                        "AND (INSTR(PRODUCT_FAMILY, 'CTS - Conferencing') > 0 OR INSTR(PRODUCT_FAMILY, 'Acano') > 0 "  \
+                                                               "OR (INSTR(PRODUCT, 'CMM') > 0 AND INSTR(PRODUCT_FAMILY, 'CTS - Management') > 0)) " \
+                                                        "ORDER BY CREATE_DATE "}},
+                            
+                              "apidatefmt": "%Y-%m-%d %H:%M:%S.%f"},
+
+                     #  Software Downloads - [SWDL]
+                     "SWDL": {"products": {"CMA": "Cisco Meeting App",
+                                           "CMS": "Cisco Meeting Server",
+                                           "CMM": "Cisco Meeting Manager"},
+
+                              "kpi": {"SWDL": {"wikitext": {"CMA": "CMA Software Downloads",
+                                                            "CMS": "CMS Software Downloads",
+                                                            "CMM": "CMM Software Downloads"}}},
+                             
+                              "swdlfile": "SWDL_data.xlsx",
+
+                              "xlsheetname": "SWDownloads-123",
+
+                              "access_types": ['1 - Registered Guest', '2 - Customer', '3 - Partner'],
+                              
+                              "xldatefmt": "%d/%m/%Y %HH:%MM:%SS"}
+
+                     
                      }
            }
 

@@ -15,7 +15,6 @@ import os
 import sys
 import json
 import requests
-import warnings
 
 # user defined module
 import util
@@ -24,7 +23,8 @@ import config
 from jira import JIRA
 from jira.exceptions import JIRAError
 
-from datetime import datetime
+from datetime import datetime, date
+
 
 try:
     import pandas as pd
@@ -33,8 +33,83 @@ except ImportError:
     print("Please install the python 'pandas' and 'xlrd' modules")
     sys.exit(-1)
 
+
 # get log
 kpilog = util.get_logger(config.autokpi["logname"])
+
+# set current working dir
+CWD = os.getcwd()  
+
+# -----------------------
+# Oracle DB Access Class
+# -----------------------
+class OracleDB:
+
+    ''' *** NOTE: Order of columns in SQL and columns in config MUST be same *** '''
+    
+    def __init__(self, toolcfg):
+        try:
+            os.chdir(toolcfg["oracle_dir"])
+            import cx_Oracle
+            conn_str = toolcfg["conn_str"].format(**toolcfg["conn_parms"])
+            self.conn = cx_Oracle.connect(conn_str)
+            kpilog.info("Oracle DB Connection Status: OK")
+
+        except cx_Oracle.DatabaseError as e:
+            kpilog.error("{}".format(str(e)))
+            os.chdir(CWD)
+
+
+    def append_db_data(rows, db_data):
+        for i, r in enumerate(rows):
+            db_data['CASE_NUMBER'].append(r[0])
+            db_data['ENGAGEMENT_ID'].append(r[1])
+            db_data['ENGAGEMENT_STATUS'].append(r[2])
+            db_data['PRODUCT'].append(r[3])
+            db_data['PRODUCT_FAMILY'].append(r[4])
+            db_data['CREATE_DATE'].append(r[5])
+            db_data['CLOSED_DATE'].append(r[6])
+        return db_data
+
+
+    def run_query(self, sql, arraysize, db_dict):
+        try:
+            cursor = self.conn.cursor()
+            cursor.arraysize = arraysize
+            rows = cursor.execute(sql).fetchall()
+            db_data = OracleDB.append_db_data(rows, db_dict)
+
+        except Exception as e:
+            db_data = db_dict    # return empty dictionary
+            kpilog.error("{}".format(str(e)))
+            
+        finally:
+            if cursor:
+                cursor.close()
+            return db_data
+
+
+    def quit(self):
+        self.conn.close()
+        os.chdir(CWD)
+
+
+#------------------------------------------------------------
+# Construct filename from config using tool/kpi
+# - returns filename (string) 
+#------------------------------------------------------------
+def get_config_filename(tool, kpi):
+ 
+    filename = ''.join([tool, "-", kpi, "s.xlsx"])
+    filename = os.path.join(config.autokpi["datadir"], filename)
+    
+    if os.path.exists(filename):
+        kpilog.debug("Found: {}".format(filename))
+    else:
+        kpilog.debug("{} does not exist - check config setup".format(filename))
+        return None
+
+    return filename
 
 
 #------------------------------------------------------------
@@ -42,6 +117,9 @@ kpilog = util.get_logger(config.autokpi["logname"])
 # - returns list of column names 
 #------------------------------------------------------------
 def get_column_names(toolcfg):
+
+    if "SWDL" in toolcfg["kpi"]:
+        return None
 
     id_col = toolcfg["id_column"]
     status_col = toolcfg["status_column"]
@@ -54,36 +132,51 @@ def get_column_names(toolcfg):
 
     return columns
 
-    
-#------------------------------------------------------------
-# Construct filename from config using tool/kpi
-# - returns filename (string) 
-#------------------------------------------------------------
-def get_config_filename(tool, kpi):
 
-    cwd = os.getcwd()
-    
-    filename = ''.join([tool, "-", kpi, "s.xlsx"])
-    filename = os.path.join(cwd, config.autokpi["datadir"], filename)
-    
-    if os.path.exists(filename):
-        kpilog.debug("Found: {}".format(filename))
+#-------------------------------------------------------------
+# Import data from a defined sheet in a given Excel workbook
+# - returns DataFrame structure 
+#-------------------------------------------------------------
+def import_from_excel(toolcfg, tool, kpi):
+
+    import_df = None
+
+    if kpi == 'SWDL':       # Software downloads
+        swdlfile = toolcfg["swdlfile"]
+        xlfile = os.path.join(config.autokpi["datadir"], swdlfile)
+        if not os.path.exists(xlfile):
+           kpilog.debug("SWDL data file {} does not exist".format(xlfile))
+           xlfile = None
+
     else:
-        kpilog.debug("{} does not exist - check config setup".format(filename))
-        return None
+        xlfile = get_config_filename(tool, kpi)
 
-    return filename
+    if not xlfile: return None
+    
+    # import defined columns
+    xlsheetname = toolcfg["xlsheetname"]
+    columns = get_column_names(toolcfg)
+    
+    import_df = util.get_xl_df(xlfile, xlsheetname)
+    if columns:
+        import_df = xldf[columns]
+
+    if not import_df is None:
+        kpilog.info("Imported records: {0}".format(len(import_df)))
+
+
+    return import_df
 
 
 #-------------------------------------------------------------
 # Setup data structure for loading API data
 # - returns dictionary
 #-------------------------------------------------------------
-def get_api_data_structure(toolcfg, kpi=None):
+def get_data_structure(toolcfg, kpi=None):
 
     api_data = {}
 
-    if kpi == 'ATC':
+    if kpi in ['ATC', 'BEMS']:
         columns = toolcfg["columns"]
     else:
         columns = get_column_names(toolcfg)
@@ -126,48 +219,18 @@ def api_status_code_desc(api):
         status_desc = "Request Unsuccessfull"
             
     return status_desc
-
     
-#-------------------------------------------------------------
-# Import data from a defined sheet in a given Excel workbook
-# - returns DataFrame structure 
-#-------------------------------------------------------------
-def import_from_excel(toolcfg, tool, kpi):
-
-    import_df = None
-
-    xlfile = get_config_filename(tool, kpi)
-    if not xlfile: return None
-    
-    # import defined columns
-    xlsheetname = toolcfg["xlsheetname"]
-    columns = get_column_names(toolcfg)
-    #xlcolumns = cfg["xlcolumns"]  
-
-    try:
-        # import Excel data from specific workbook and sheet; ignore xlrd warnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            xldf = pd.read_excel(xlfile, sheet_name=xlsheetname)
-            import_df = xldf[columns]
-            
-    except Exception as e:
-        kpilog.error("{}".format(str(e)))
-
-    if not import_df is None:
-        kpilog.info("Imported records: {0}".format(len(import_df)))
-
-    return import_df
-
 
 #-------------------------------------------------------------
 # Connect to JIRA client 
 # - returns JIRA client object 
 #-------------------------------------------------------------
-def get_jira_client(toolcfg, user, pwd, kpi):
+def get_jira_client(toolcfg, kpi):
 
     jra = None
+
+    user = config.autokpi["auth"]["user"]
+    pwd = config.autokpi["auth"]["password"]
     
     server = toolcfg["apiserver"]
     option = {"server": server}
@@ -195,7 +258,7 @@ def get_jira_issues(toolcfg, jra, kpi):
     # get JQL query from config
     kpi_jql = toolcfg["kpi"][kpi]["jql"]
 
-    # set limits on records to retrieve (500 at a time)
+    # set limits on records to retrieve (1000 at a time)
     # (NB: JIRA pulls max of 1000 records in one call)
     size = 1000   
     size_cnt  = 0
@@ -207,7 +270,7 @@ def get_jira_issues(toolcfg, jra, kpi):
     open_col = toolcfg["open_column"]
     closed_col = toolcfg["closed_column"]
 
-    api_data = get_api_data_structure(toolcfg)
+    api_data = get_data_structure(toolcfg)
     
     while True:
         start = size_cnt * size
@@ -244,66 +307,45 @@ def get_jira_issues(toolcfg, jra, kpi):
 
 
 #-------------------------------------------------------------
-# Build url from config
-# - returns string
+# Import ACANO schedules
+# - returns DataFrame structure 
 #-------------------------------------------------------------
-def get_url(toolcfg, kpi, parms=None):
+def import_acano_results(toolcfg, acano_json):
+
+    curr_dt = date.today()
     
-    query = ""
-    fields = ""
-    return_type = ""
-    
-    webservice = toolcfg["apiserver"]
-    
-    if "query" in toolcfg["kpi"][kpi]:
-        query = toolcfg["kpi"][kpi]["query"].replace(' ', '%20')
-        
-        if kpi == 'ATC':
-            query = query.replace('XXX', parms)
+    api_data = get_data_structure(toolcfg, 'ATC')
+   
+    for idx in range(len(acano_json)):
 
-            
-    if "type" in toolcfg["kpi"][kpi]:
-        return_type = toolcfg["kpi"][kpi]["type"].replace('XXX', 'json')
-        
-    if "fields" in toolcfg["kpi"][kpi]:
-        fields = toolcfg["kpi"][kpi]["fields"]
+        # exclude data where 'No Result' is zero
+        if acano_json[idx]["noresult"] == 0:            
+            continue
 
-    url = str.join('',[webservice, query, return_type, fields])
-    kpilog.info("URL: {}".format(url))
-    
-    return url
+        # only retrieve up to 2yrs worth of data
+        tmstp = acano_json[idx]["timestamp"]
+        if tmstp:
+            if (curr_dt.year - int(tmstp[:4])) > 2:      
+                break
+
+        for column, data in acano_json[idx].items():
+            if column in api_data:
+                api_data[column].append(data)
 
 
-#-------------------------------------------------------------
-# Connect to webservice 
-# - returns json 
-#-------------------------------------------------------------
-def get_qddts_data(toolcfg, kpi):
-    
-    url = get_url(toolcfg, kpi)    
+    # create dataframe          
+    api_df = pd.DataFrame(api_data)
 
-    try:
-        req = requests.get(url)
-        
-        if not req.status_code == requests.codes.ok:
-            req_msg = api_status_code_desc(req)
-            kpilog.error("QDDTS Webservice ERROR - {0}".format(req_msg))
-            return None
-        
-    except Exception as e:
-        kpilog.error("QDDTS Webservice ERROR - {0}".format(str(e)))
-
-    kpilog.info("QDDTS Connection: OK")
-    return req.json()
+    return api_df
 
 
 #-------------------------------------------------------------
-# Import Webserver results
+# Import QDDTS results
 # - returns Dataframe structure
 #-------------------------------------------------------------
-def process_qddts_results(toolcfg, qddts_json):
+def import_qddts_results(toolcfg, qddts_json):
 
-    api_data = get_api_data_structure(toolcfg)
+    api_data = get_data_structure(toolcfg)
 
     # id from api differs from excel
     id_col = toolcfg["id_api"]
@@ -332,61 +374,97 @@ def process_qddts_results(toolcfg, qddts_json):
 
 
 #-------------------------------------------------------------
-# Process ACANO schedules
-# - returns DataFrame structure 
+# Build url from config
+# - returns string
 #-------------------------------------------------------------
-def import_acano_schedule(toolcfg, acano_json):
-
-    curr_dt = datetime.today()
+def get_url(toolcfg, kpi, parms):
     
-    api_data = get_api_data_structure(toolcfg, 'ATC')
-   
-    for idx in range(len(acano_json)):
+    query = ""
+    fields = ""
+    return_type = ""
+    
+    webservice = toolcfg["apiserver"]
+    
+    # formulate query    
+    if "query" in toolcfg["kpi"][kpi]:
+        query = toolcfg["kpi"][kpi]["query"].replace(' ', '%20')
+        # replace XXX in queries
+        if kpi == 'ATC':
+            query = query.replace('XXX', parms)     # insert schedule
+        
 
-        # exclude data where 'No Result' is zero
-        if acano_json[idx]["noresult"] == 0:            
-            continue
+            
+    if "type" in toolcfg["kpi"][kpi]:
+        return_type = toolcfg["kpi"][kpi]["type"].replace('XXX', 'json')
+        
+    if "fields" in toolcfg["kpi"][kpi]:
+        fields = toolcfg["kpi"][kpi]["fields"]
 
-        # only retrieve up to 2yrs worth of data
-        tmstp = acano_json[idx]["timestamp"]
-        if tmstp:
-            if (curr_dt.year - int(tmstp[:4])) > 2:      
-                break
-
-        for column, data in acano_json[idx].items():
-            if column in api_data:
-                api_data[column].append(data)
-
-
-    # create dataframe          
-    api_df = pd.DataFrame(api_data)
-
-    return api_df
+    url = str.join('',[webservice, query, return_type, fields])
+    kpilog.info("URL: {}".format(url))
+    
+    return url
 
 
 #-------------------------------------------------------------
-# Connect to ACANO 
-# - returns json object 
+# Connect to webservice 
+# - returns json 
 #-------------------------------------------------------------
-def get_acano_schedule(toolcfg, user, pwd, kpi, parms):
+def get_api_data(toolcfg, kpi, parms=None):
 
     req = None
-    url = get_url(toolcfg, kpi, parms)
-    
+
+    # setup authorised user
+    if kpi == 'ATC':    
+        user = toolcfg["user"]
+        pwd = toolcfg["password"]
+    else:
+        user = config.autokpi["auth"]["user"]
+        pwd = config.autokpi["auth"]["password"]
+        
+    url = get_url(toolcfg, kpi, parms)    
+
     try:
         req = requests.get(url, auth=(user, pwd))
-
+        
         if not req.status_code == requests.codes.ok:
             req_msg = api_status_code_desc(req)
-            kpilog.error("ACANO API ERROR - {0}".format(req_msg))
+            kpilog.error("{0} API server error - {1}".format(kpi, req_msg))
             return None
-            
+        
     except Exception as e:
-        kpilog.error("ACANO API ERROR - {0}".format(api_status_code_desc(e.status_code)))
+        kpilog.error("{0} API server error - {1}".format(kpi, str(e)))
 
-    kpilog.info("ACANO Connection Status: OK")
-    
+    kpilog.info("{0} Connection: OK".format(kpi))
     return req.json()
+
+
+#-------------------------------------------------------------
+# Connect to Oracle DB 
+# - returns DataFrame structure
+#-------------------------------------------------------------
+def import_from_db(toolcfg, kpi):
+
+    oraDB = None
+    db_data = None
+
+    # set end date in query
+    end_dt = datetime(date.today().year, date.today().month, 1).strftime("%m/%d/%Y")
+    query = toolcfg["kpi"][kpi]["query"]
+    sql = query.replace('XXX', end_dt)
+
+    # connect to Oracle
+    oraDB = OracleDB(toolcfg)
+    
+    if oraDB:
+        arraysize = toolcfg["kpi"][kpi]["arraysize"]
+        db_dict = get_data_structure(toolcfg, 'BEMS')
+        db_data = oraDB.run_query(sql, arraysize, db_dict)
+        oraDB.quit()
+        
+    db_df = pd.DataFrame(db_data)
+        
+    return db_df
 
 
 #-------------------------------------------------------------
@@ -397,35 +475,32 @@ def import_from_api(toolcfg, tool, kpi, parms=None):
 
     import_df = None
 
-    user = config.autokpi["auth"]["user"]
-    pwd = config.autokpi["auth"]["password"]
-
     if tool == 'JIRA':
-        jra = get_jira_client(toolcfg, user, pwd, kpi)
+        jra = get_jira_client(toolcfg, kpi)
         if jra:
             import_df = get_jira_issues(toolcfg, jra, kpi)
         
     elif tool == 'CDETS':
-        qddts_json = get_qddts_data(toolcfg, kpi)
+        qddts_json = get_api_data(toolcfg, kpi)
         if qddts_json:
-            import_df = process_qddts_results(toolcfg, qddts_json)
+            import_df = import_qddts_results(toolcfg, qddts_json)
 
     elif tool == 'ACANO':
         if not parms:
-            kpilog.error("ACANO API ERROR - No schedule input for data retrieval")
+            kpilog.error("ACANO API ERROR - Schedule parameter required for data retrieval")
+            return
         
-        user = toolcfg["user"]
-        pwd = toolcfg["password"]
-        
-        acano_json = get_acano_schedule(toolcfg, user, pwd, kpi, parms)
+        acano_json = get_api_data(toolcfg, kpi, parms)
         if acano_json:
-            import_df = import_acano_schedule(toolcfg, acano_json)
-
+            import_df = import_acano_results(toolcfg, acano_json)
 
     #savecsv = str.join('',[kpi, '_raw.csv'])
     #import_df.to_csv(savecsv, sep=',')
 
-    if len(import_df) > 0:
+    if import_df is None:
+        kpilog.info("No {} records to import".format(kpi))
+    else:
         kpilog.info("Imported records: {}".format(len(import_df)))
 
     return import_df
+

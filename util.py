@@ -13,15 +13,21 @@ Description:  Generic script to store common modules:
               - get_kpi_months(start_dt, end_dt)
               - get_kpi_fyq_start_end(start_dt, end_dt)
               - get_month_fyq(months_df)
+              - get_df_start_end_dates(df, datecol)
               - get_kpi_codes(kpi_list)
+              - group_data_by_week(df, datecolumn, wkstart, wkend, keycolumn, countcolumn)
+              - group_data_by_day_month(df, datecolumn, keycolumn, countcolumn)
+              - sort_df_by_date(df, column, datefmt)
               - setup_logger(logname, logfile)
               - get_logger(logname)
+              - get_xl_df(xlfile, xlsheetname=None)
 
 *******************************************************************************"""
 
 import os
 import time
 import logging
+import warnings
 
 import config   # user defined
 
@@ -163,6 +169,19 @@ def get_month_fyq(months):
             
     return fyq
 
+#-------------------------------------------------------------
+# Return start/end dates of DataFrame date column 
+#-------------------------------------------------------------
+def get_df_start_end_dates(df, datecol):
+
+    # convert df dates to datetime
+    dt = pd.to_datetime(str(min(list(df[datecol].values))))
+    start_dt = datetime.strptime(dt.strftime("%d/%m/%Y"), "%d/%m/%Y")
+    dt = pd.to_datetime(str(max(list(df[datecol].values))))
+    end_dt = datetime.strptime(dt.strftime("%d/%m/%Y"), "%d/%m/%Y")
+
+    return start_dt, end_dt
+
 
 #-------------------------------------------------------------
 # Parse kpi list and return tool with selected kpi codes
@@ -195,6 +214,80 @@ def get_kpi_codes(kpi_list):
                     break
     
     return out_kpi
+
+
+#-------------------------------------------------------------
+# Group data by day/month
+# - returns dict
+#-------------------------------------------------------------
+def group_data_by_day_month(df, keydate, keycol, keycnt):
+
+    grp_data = {}
+
+    for i in df.index:
+        dt = df[keydate][i]
+        key = df[keycol][i]
+
+        # check for valid releaseno's
+        if keycol == "ReleaseNo":
+            if not key.replace('.','').isdigit() \
+               or key.split('.')[0] == '0':         # not a valid number
+                continue
+
+        if not dt in grp_data:          # by day/month
+            grp_data[dt] = {}
+        if not key in grp_data[dt]:     # by product / releaseno
+            grp_data[dt][key] = 0
+                
+        grp_data[dt][key] += df[keycnt][i]
+
+              
+    return grp_data
+
+
+#-------------------------------------------------------------
+# Grroup data by week
+# - returns Dataframe structure
+#-------------------------------------------------------------
+def group_data_by_week(df, keydate, wkstart, wkend, keycol, keycnt):
+
+    grp_data = {}
+   
+    for idx, wk in enumerate(wkstart):      # by week
+        if not wk in grp_data:
+            grp_data[wk] = {}
+
+        for i in df.index:
+            dt = df[keydate][i].date()
+            key = df[keycol][i]
+
+            if keycol == "ReleaseNo":
+                if not key.replace('.','').isdigit() \
+                   or key.split('.')[0] == '0':         # not a valid number
+                    continue
+            
+            if not key in grp_data[wk]:    # by Product / ReleaseNo
+                grp_data[wk][key] = 0
+        
+            if (dt >= wk.date()) and (dt <= wkend[idx].date()):
+                grp_data[wk][key] += df[keycnt][i]
+
+
+    return grp_data
+
+
+#-------------------------------------------------------------
+# Returned sorted dataframe by date column
+#-------------------------------------------------------------
+def sort_df_by_date(df, column, datefmt):
+
+    dates = pd.to_datetime(df[column], format=datefmt, errors='coerce')
+    df_sorted = df.assign(dates=dates)
+    df_sorted.sort_values("dates", ascending=True, inplace=True)
+    
+    df_sorted.drop("dates", axis=1, inplace=True)
+
+    return df_sorted
 
 
 #-------------------------------------------------------------
@@ -236,4 +329,24 @@ def setup_logger(logname, logfile):
     logger.addHandler(log_hndlr)
 
     return logger
-    
+
+
+#-------------------------------------------------------------
+# Create Dataframe from Excel
+# - returns Dataframe 
+#-------------------------------------------------------------
+def get_xl_df(xlfile, xlsheetname=None):
+
+    xldf = None
+
+    # import Excel data from specific workbook and sheet; ignore xlrd warnings
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+        if xlsheetname:
+            xldf = pd.read_excel(xlfile, sheet_name=xlsheetname)
+        else:
+            xldf = pd.read_excel(xlfile)
+            
+    return xldf

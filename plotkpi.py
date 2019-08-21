@@ -33,6 +33,11 @@ except ImportError:
     sys.exit(-1)
 
 
+# Colour map
+PRODCOLORS = {"CMA":'forestgreen', "CMS":'darkorange', "CMM":'cornflowerblue'}
+STACKCOLORS = ['royalblue','darkorange','darkgray','gold','cornflowerblue','darkseagreen','navy','firebrick','mediumpurple']
+
+
 kpilog = util.get_logger(config.autokpi["logname"])
 
 
@@ -48,7 +53,20 @@ def get_custom_font():
 
     return fontproperties
 
+
+#----------------------------------------------------------------
+# Set font properties for x/y labels
+#----------------------------------------------------------------
+def set_label_properties(ax1, fontproperties):
     
+    ax1.xaxis.get_label().set_fontproperties(fontproperties)
+    ax1.yaxis.get_label().set_fontproperties(fontproperties)
+
+    for label in (ax1.get_xticklabels() + ax1.get_yticklabels()):
+        label.set_fontproperties(fontproperties)    
+
+    return
+
 #----------------------------------------------------------------
 # Setup plot: label fonts and fontsize
 # return Plot Figure
@@ -60,8 +78,12 @@ def setup_plot(kpi, chart_title, xlim):
 
     if kpi == 'ATC':
         ax1.grid(True, which='major', axis='both', linestyle='--', alpha=0.5)
-        #ax1.yaxis.grid('on', which='major', linestyle='--', alpha=0.5)
         ax1.spines['right'].set_visible(False)
+
+    elif kpi == 'BEMS':
+        ax1.grid(True, which='major', axis='y', linestyle='-', alpha=0.6)
+        ax1.spines['right'].set_visible(False)
+        plt.xlim(0, xlim)
         
     else:
         ax1.grid(True, which='major', axis='y', linestyle='--', alpha=0.5)
@@ -69,17 +91,40 @@ def setup_plot(kpi, chart_title, xlim):
 
     ax1.spines['top'].set_visible(False)
 
-     # set custom fonts and label sizes
-    custom_font = get_custom_font()
+    # set custom fonts and label sizes
+    fontproperties = get_custom_font()
+    set_label_properties(ax1, fontproperties)
 
-    #if kpi == 'ATC':
-    #    plt.title(chart_title, color='black', fontproperties=fontproperties)
+    if kpi == 'BEMS':
+        plt.title(chart_title, fontproperties=fontproperties, color='grey', fontsize=14, pad=10)
 
-    ax1.xaxis.get_label().set_fontproperties(custom_font)
-    ax1.yaxis.get_label().set_fontproperties(custom_font)
+      
+    return plt, fig, ax1
 
-    for label in (ax1.get_xticklabels() + ax1.get_yticklabels()):
-        label.set_fontproperties(custom_font)    
+
+#----------------------------------------------------------------
+# Setup SWDL plot
+# return Plot Figure
+#----------------------------------------------------------------
+def setup_swdl_plot(product, period, xlim):
+
+    # set figsize
+    figsize = (12,8)
+    if period[-1] in ['D', 'W']:
+        if 'all' in period:
+            figsize = (16,8)
+
+    # create plot
+    fig, ax1 = plt.subplots(figsize=figsize)
+
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['top'].set_visible(False)
+    ax1.grid(True, which='major', axis='y', linestyle='-', alpha=0.4)
+
+    fontproperties = get_custom_font()     # use Cisco fonts
+
+    set_label_properties(ax1, fontproperties)
+
         
     return plt, fig, ax1
 
@@ -153,6 +198,12 @@ def get_filename(kpi, figname, product, istest):
         else:
             figname = str.join('', ['ATC_', product, figname, ext, '.png'])
 
+    elif kpi == 'BEMS':
+        figname = str.join('', ['BEMS_', figname, ext, '.png'])
+
+    elif kpi == 'SWDL':
+        figname = ''.join(['SWDL_', product, '_', figname, ext, '.png'])
+        
     else:
         ext = str.join('',['_', figname, ext, '.png'])
         
@@ -355,8 +406,8 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
     
     kpilog.info("Plotting ATC chart for {0} {1}......".format(product, chart_key))
 
-    try:
 
+    try:
         index = df.index.values
         xaxis = df["rundate_int"].values.tolist()
 
@@ -428,7 +479,6 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         #plt.show()
 
     except Exception as e:
-
         kpilog.error("Could not create ATC chart for {0} - {1}".format(product, format(str(e))))
         return None
 
@@ -436,6 +486,158 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
     finally:
         if fig: plt.close(fig)
         
+
+    return savefile
+
+
+#-------------------------------------
+# Plot BEMS charts 
+#-------------------------------------
+def plot_bems_chart(df, chart_title, chart_key, istest=False):
+
+    fig = None
+    
+    kpilog.info("Plotting BEMS Escalation chart {0} .....".format(chart_key))
+
+
+    try:      
+        index = df.index.values.tolist()
+        xlim = len(index)
+
+        # set xaxis values
+        if "Month" in chart_key:
+            rotation = 40
+            xaxis = df.Months.values.tolist()
+        else:
+            rotation = 360
+            xaxis = df.FYQ.values.tolist()
+
+        plt, fig, ax1 = setup_plot('BEMS', chart_title, xlim)
+
+        # set bar values
+        width = 0.7
+        cma = df.CMA.values.tolist()
+        cms = df.CMS.values.tolist()
+        cmm = df.CMM.values.tolist()
+
+        p1 = ax1.bar(index, cma, width, label='CMA Client SRs', color=PRODCOLORS["CMA"], align='edge')
+        p2 = ax1.bar(index, cms, width, label='CMS SRs', bottom=cma, color=PRODCOLORS["CMS"], align='edge')
+        p3 = ax1.bar(index, cmm, width, label='CMM SRs', bottom=np.array(cma)+np.array(cms), color=PRODCOLORS["CMM"], align='edge')
+
+        # set xticklabels
+        ax1.set_xticks(index)
+        ax1.set_xticklabels(xaxis, rotation=rotation, ha='left', fontsize=9)
+     
+        # set yticklabels
+        yticks = ax1.get_yticks().tolist()
+        ax1.set_ylim(bottom=0, top=max(yticks))
+
+        plt.ylabel("Number of SRs")
+
+        # set legend
+        leg = ax1.legend(facecolor='whitesmoke', fontsize=8)
+        
+        plt.tight_layout()
+
+        # save chart
+        savefile = get_filename("BEMS", chart_key, '', istest)
+        fig.savefig(savefile)
+    
+
+    except Exception as e:
+        kpilog.error("Could not create BEMS chart {0}: {1}".format(chart_key, format(str(e))))
+        return None
+                    
+    
+    finally:
+        if fig: plt.close(fig)
+     
+
+    return savefile
+
+
+#----------------------------------------------------------------
+# Get totals for each release (across all months)
+# ---------------------------------------------------------------
+def get_release_totals(df):
+
+    reltot = {}
+    for r in df.columns.values.tolist():
+        sum_r = int(df[r].sum())
+        reltot[r] = str(sum_r)
+   
+    return reltot
+
+
+#----------------------------------------------------------------
+# Plot stack chart for all Software Downloads
+# - returns string (chart name)
+#----------------------------------------------------------------
+def plot_swdl_chart(df, product, period, istest=False):
+    
+    kpilog.info("Plotting SWDL chart for {0} {1} .....".format(product, period))
+
+    try:
+        xlim = len(df.columns)
+
+        # calculate release totals
+        release_totals = get_release_totals(df)
+    
+        # setup plot    
+        plt, fig, ax1 = setup_swdl_plot(product, period, xlim)
+
+        width = 0.4     # bar width
+        if period[-1] in ['D','W']:
+            width = 0.75
+            
+        colormap = STACKCOLORS[:xlim]
+        ax1 = df.plot(ax=ax1, kind='bar', stacked=True, width=width, color=colormap, legend=True)
+        
+        xaxis = df.index.values.tolist()   # date labels
+ 
+        # set xticklabels
+        if period == "6M":            
+            ax1.set_xticklabels(xaxis, rotation=360)     # horizontal labels
+
+        elif period[-1] in ['D', 'W']:
+
+            # set interval to display labels
+            interval = 7
+            if period[:-1].isdigit():
+                if int(period[:-1]) < 18:
+                    interval = 4
+             
+            ax1.set_xticks(ax1.get_xticks()[::interval])
+            xlabels = [m for i, m in enumerate(xaxis) if i%interval ==0]
+            ax1.set_xticklabels(xlabels)
+
+         
+        # set yticklabels
+        yticks = ax1.get_yticks().tolist()
+        ax1.set_ylim(bottom=0, top=max(yticks)) 
+
+        # display release totals against product labels
+        legend = ax1.legend()
+        for text in legend.texts:
+            rtext = str(text.get_text())
+            if rtext in release_totals:
+                new_text = ''.join([rtext, ' (', release_totals[rtext], ')'])
+                text.set_text(new_text)
+
+                    
+        plt.tight_layout()
+
+        # save chart
+        savefile = get_filename('SWDL', period, product, istest)
+        fig.savefig(savefile)
+        
+        plt.close(fig)
+
+
+    except Exception as e:
+        
+        kpilog.error("Could not create SWDL chart for {0} {1}: \n {2}".format(product, period, format(str(e))))
+        return None
 
     return savefile
 

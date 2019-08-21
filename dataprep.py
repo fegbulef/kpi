@@ -466,4 +466,109 @@ def get_atc_plot_data(df, toolcfg):
 
     
     return df_atc_plot
+
+            
+#------------------------------------------------------------
+# Process BEMS data ready for plotting
+# - returns DataFrame structure 
+#------------------------------------------------------------
+def get_bems_plot_data(df, toolcfg, months_fyq_df):
+
+    # add product type (CMS/CMA/CMM) to df
+    prodtype = [''] * len(df)
+    for i in df.index:
+        for p, plist in toolcfg["products"].items():
+            if df.PRODUCT[i] in plist:
+                prodtype[i] = p
+                break
+            
+    df = df.assign(ProdType=prodtype)
+   
+    # filter for ProdType (CMS/CMA/CMM)
+    prod_filter = df.ProdType.map(lambda x: x in toolcfg["products"].keys())
+    df = df[prod_filter]
+
+    # group by product / month
+    df_grp = df[['OpenMonth','ProdType']].groupby(['OpenMonth','ProdType']).size().reset_index(name='ProdCnt')
+    grp_data = util.group_data_by_day_month(df_grp, "OpenMonth", "ProdType", "ProdCnt")
+    df_grouped = pd.DataFrame(grp_data)
+    df_grouped.fillna(0, inplace=True)
+
+    # sort date columns
+    dates = pd.DataFrame(df_grouped.columns.values.tolist(), columns=["Months"])
+    df_sorted = util.sort_df_by_date(dates, "Months", "%b-%y")
+    df_grouped = df_grouped[df_sorted.Months.values.tolist()]
+
+    df_grouped = df_grouped.transpose()     # place months as row headers
+    df_grouped.reset_index(inplace=True)
+    df_grouped.rename(columns={"index": "Months"}, inplace=True)
+
+    # get valid months
+    df_grouped.set_index("Months", inplace=True)
+
+    df_bems_plot_data = pd.merge(months_fyq_df[["Months", "FYQ"]],
+                                df_grouped[["CMA", "CMS", "CMM"]],
+                                on="Months",
+                                how='left',
+                                indicator=False)
+
+    df_bems_plot_data.fillna(0, inplace=True)
+    df_bems_plot_data.reset_index(inplace=True)
+
+    if 'index' in df_bems_plot_data.columns:
+        df_bems_plot_data.drop('index', axis=1, inplace=True)    # index column created by merge
+
+   
+    return df_bems_plot_data
+
+
+#------------------------------------------------------------
+# Group escalations by Month
+# - returns DataFrame structure
+#------------------------------------------------------------
+def group_bems_by_month(df, months_to_plot_df):
+
+    df.set_index("Months", inplace=True)
+     
+    df_bems_by_month = pd.merge(months_to_plot_df["Months"],
+                                df[["CMA", "CMS", "CMM"]],
+                                on="Months",
+                                how='left',
+                                indicator=False)
+
+    df_bems_by_month.fillna(0, inplace=True)
+    df_bems_by_month.reset_index(inplace=True)
+
+    if 'index' in df_bems_by_month.columns:
+        df_bems_by_month.drop('index', axis=1, inplace=True)    # index column created by merge
+
+       
+    return df_bems_by_month
+
+
+#------------------------------------------------------------
+# Group escalations by FYQ
+# - returns DataFrame structure
+#------------------------------------------------------------
+def group_bems_by_fyq(df, end_fyq):
+    
+    # sum data by FYQ
+    df_bems_by_fyq = df.groupby(["FYQ"])["CMA", "CMS", "CMM"].sum()
+
+    df_bems_by_fyq.fillna(0, inplace=True)
+    df_bems_by_fyq.reset_index(inplace=True)
+
+    # only report current fyq if at end  
+    if not end_fyq:
+        df_bems_by_fyq = df_bems_by_fyq.head(-1)
+
+    # display FYQ as 'Q FY'
+    fyq = df_bems_by_fyq.FYQ.str.split(' ', 2, expand=True)
+    fyq.columns = ['fy', 'q']
+    qfy = fyq.q + ' ' + fyq.fy
+
+    df_bems_by_fyq = df_bems_by_fyq.assign(FYQ=qfy)
+
+
+    return df_bems_by_fyq
             
