@@ -84,8 +84,7 @@ def setup_plot(kpi, chart_title, xlim):
     elif kpi == 'BEMS':
         ax1.grid(True, which='major', axis='y', linestyle='-', alpha=0.6)
         ax1.spines['right'].set_visible(False)
-        plt.xlim(0, xlim)
-        
+                
     else:
         ax1.grid(True, which='major', axis='y', linestyle='--', alpha=0.5)
         plt.xlim(-0.7, xlim)
@@ -507,11 +506,15 @@ def plot_bems_chart(df, chart_title, chart_key, istest=False):
 
         # set xaxis values
         if "Month" in chart_key:
-            rotation = 40
+            rotation = 90
+            bar_align = 'center'
             xaxis = df.Months.values.tolist()
+            
         else:
             rotation = 360
+            bar_align = 'edge'
             xaxis = df.FYQ.values.tolist()
+
 
         plt, fig, ax1 = setup_plot('BEMS', chart_title, xlim)
 
@@ -521,13 +524,20 @@ def plot_bems_chart(df, chart_title, chart_key, istest=False):
         cms = df.CMS.values.tolist()
         cmm = df.CMM.values.tolist()
 
-        p1 = ax1.bar(index, cma, width, label='CMA Client SRs', color=PRODCOLORS["CMA"], align='edge')
-        p2 = ax1.bar(index, cms, width, label='CMS SRs', bottom=cma, color=PRODCOLORS["CMS"], align='edge')
-        p3 = ax1.bar(index, cmm, width, label='CMM SRs', bottom=np.array(cma)+np.array(cms), color=PRODCOLORS["CMM"], align='edge')
+        p1 = ax1.bar(index, cma, width, label='CMA Client SRs', color=PRODCOLORS["CMA"], align=bar_align)
+        p2 = ax1.bar(index, cms, width, label='CMS SRs', bottom=cma, color=PRODCOLORS["CMS"], align=bar_align)
+        p3 = ax1.bar(index, cmm, width, label='CMM SRs', bottom=np.array(cma)+np.array(cms), color=PRODCOLORS["CMM"], align=bar_align)
 
         # set xticklabels
+        if "Month" in chart_key:
+            ha = 'center'
+            plt.xlim(-0.5, xlim)
+        else:
+            ha = 'left'
+            plt.xlim(0, xlim)
+              
         ax1.set_xticks(index)
-        ax1.set_xticklabels(xaxis, rotation=rotation, ha='left', fontsize=9)
+        ax1.set_xticklabels(xaxis, rotation=rotation, ha=ha, fontsize=9)
      
         # set yticklabels
         yticks = ax1.get_yticks().tolist()
@@ -536,7 +546,7 @@ def plot_bems_chart(df, chart_title, chart_key, istest=False):
         plt.ylabel("Number of SRs")
 
         # set legend
-        leg = ax1.legend(facecolor='whitesmoke', fontsize=8)
+        leg = ax1.legend(facecolor='gainsboro', fontsize=8)
         
         plt.tight_layout()
 
