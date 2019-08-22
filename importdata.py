@@ -14,12 +14,13 @@ Description:  Import raw data for KPI automation process.
 import os
 import sys
 import json
+
+import util    # user defined
+import config  #
+
 import requests
 import cx_Oracle
-
-# user defined module
-import util
-import config
+import pandas as pd
 
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -27,19 +28,12 @@ from jira.exceptions import JIRAError
 from datetime import datetime, date
 
 
-try:
-    import pandas as pd
-    
-except ImportError:
-    print("Please install the python 'pandas' and 'xlrd' modules")
-    sys.exit(-1)
-
-
 # get log
 kpilog = util.get_logger(config.autokpi["logname"])
 
 # set current working dir
 CWD = os.getcwd()  
+
 
 # -----------------------
 # Oracle DB Access Class
@@ -187,40 +181,6 @@ def get_data_structure(toolcfg, kpi=None):
     return api_data
 
 
-#------------------------------------------------------------
-# Get API status code description
-# - returns string 
-#------------------------------------------------------------
-def api_status_code_desc(api):
-
-    status_desc = ''
-
-    if api.status_code == 200:
-        status_desc = "OK"
-    elif api.status_code == 204:
-        status_desc = "No Content"
-    elif api.status_code == 400:
-        status_desc = "Bad Request"
-    elif api.status_code == 401:
-        status_desc = "Unauthorized User/Password"
-    elif api.status_code == 403:
-        status_desc = "No permission to make this request"
-    elif api.status_code == 404:
-        status_desc = "Source Not found"
-    elif api.status_code == 405:
-        status_desc = "Method Not Allowed"
-    elif api.status_code == 429:
-        status_desc = "Too Many Requests"
-    elif api.status_code == 500:
-        status_desc = "Internal Server Error"
-    elif api.status_code == 503:
-        status_desc = "Service Unavailable"
-    else:
-        status_desc = "Request Unsuccessfull"
-            
-    return status_desc
-    
-
 #-------------------------------------------------------------
 # Connect to JIRA client 
 # - returns JIRA client object 
@@ -239,10 +199,9 @@ def get_jira_client(toolcfg, kpi):
         jra = JIRA(options=option, auth=(user, pwd))
         if not jra:
             kpi.error("JIRA API Unsuccessful for {0}".format(kpi))
-            return None
             
     except JIRAError as e:
-        kpilog.error("JIRA API ERROR - {0}".format(api_status_code_desc(e.status_code)))
+        kpilog.error("JIRA API ERROR - {0}".format(str(e)))
 
     kpilog.info("JIRA Connection Status: OK")
     
@@ -391,8 +350,6 @@ def get_url(toolcfg, kpi, parms):
         # replace XXX in queries
         if kpi == 'ATC':
             query = query.replace('XXX', parms)     # insert schedule
-        
-
             
     if "type" in toolcfg["kpi"][kpi]:
         return_type = toolcfg["kpi"][kpi]["type"].replace('XXX', 'json')
@@ -401,7 +358,7 @@ def get_url(toolcfg, kpi, parms):
         fields = toolcfg["kpi"][kpi]["fields"]
 
     url = str.join('',[webservice, query, return_type, fields])
-    kpilog.info("URL: {}".format(url))
+    #kpilog.debug("URL: {}".format(url))
     
     return url
 
@@ -428,8 +385,7 @@ def get_api_data(toolcfg, kpi, parms=None):
         req = requests.get(url, auth=(user, pwd))
         
         if not req.status_code == requests.codes.ok:
-            req_msg = api_status_code_desc(req)
-            kpilog.error("{0} API server error - {1}".format(kpi, req_msg))
+            kpilog.error("{0} API server error - {1}".format(kpi, str(e)))
             return None
         
     except Exception as e:

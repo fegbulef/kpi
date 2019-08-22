@@ -25,7 +25,7 @@ import config
 import importdata  
 import dataprep
 import plotkpi
-import swdlprep    # Software Downloads
+import swdlprep    
 
 
 kpilog = util.setup_logger(config.autokpi["logname"], config.autokpi["logfile"])
@@ -147,7 +147,7 @@ def process_swdl_data(df, toolcfg):
 
     # Plot kpis by Product 
     for product in toolcfg["products"]:
-        df_product = swdlprep.get_swdl_product(swdl_df, product)
+        df_product = dataprep.get_product_data(swdl_df, product, toolcfg, "SWDL")
         
         if df_product is None:
             kpilog.warning("No Software Downloads data found for {}".format(product))

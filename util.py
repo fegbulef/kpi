@@ -31,13 +31,8 @@ import warnings
 
 import config   # user defined
 
-try:
-    import numpy as np
-    import pandas as pd
-    
-except ImportError:
-    print("Please install the python 'pandas' and 'xlrd' modules")
-    sys.exit(-1)
+import numpy as np
+import pandas as pd
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta

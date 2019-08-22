@@ -13,23 +13,24 @@ import os
 import sys
 import time
 
-# user defined module
-import util
-import config
+import util    # user defined
+import config  #
+
+import xlrd
+import numpy as np
+import pandas as pd
+
+import matplotlib as mpl
+mpl.use('Agg')
+
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 try:
-    import xlrd
-    import numpy as np
-    import pandas as pd
+    import xlrd   
 
-    import matplotlib as mpl
-    mpl.use('Agg')
-    
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as ticker
-    
 except ImportError:
-    print("Please make sure the following modules are installed: 'pandas'; 'matplotlib'")
+    print("Please install the following module: 'xlrd'")
     sys.exit(-1)
 
 

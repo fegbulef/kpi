@@ -19,8 +19,9 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
            "wikiLive": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Dashboard+KPIs",
            "wikiTest": r"https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Test+Dashboard+KPIs",
            "wikilogin": r"https://jira-eng-gpk2.cisco.com/jira/login.jsp",
-           
-           "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    # fiscal year qtrs
+
+           # fiscal year qtrs
+           "fyq": {"Q1": ["AUG","SEP","OCT"], "Q2": ["NOV","DEC","JAN"],    
                    "Q3": ["FEB","MAR","APR"], "Q4": ["MAY","JUN","JUL"]},
 
            "datadir": r"/kpi/data",       
@@ -34,7 +35,11 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
            "fyqs_to_plot": 14,              
            "months_to_plot": -18,           
 
-           # KPI tools: JIRA - [CFPD, AFCD, IFD]
+           # ----------
+           # KPI tools:
+           # ----------
+
+           # JIRA - [CFPD, AFCD, IFD]
            "tools": {"JIRA": {"apiserver": r"https://jira-eng-gpk2.cisco.com/jira/",
                               
                               "products": ["CLIENT","SERVER","CMM"],
@@ -76,7 +81,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                               "xldatefmt": "%d/%m/%Y %H:%M:%S",
                               "apidatefmt": "%Y-%m-%dT%H:%M:%S"},
                      
-                     #  CDETS - [PSIRT]
+                     # CDETS - [PSIRT]
                      "CDETS": {"apiserver": r"http://wwwin-metrics.cisco.com/cgi-bin/ws/ws_ddts_query_new.cgi?",
 
                                "products": ["meeting_apps","meetingserver","cmm"],
@@ -137,8 +142,8 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
 
                               "columns": ["CASE_NUMBER", "ENGAGEMENT_ID", "ENGAGEMENT_STATUS", "PRODUCT", "PRODUCT_FAMILY", "CREATE_DATE", "CLOSED_DATE"],
 
-                              "open_column": "CREATE_DATE",      # columns for date filtering
-                              "closed_column": "CLOSED_DATE",  #
+                              "open_column": "CREATE_DATE",     # columns for date filtering
+                              "closed_column": "CLOSED_DATE",   #
 
                               "product_column": "PRODUCT",
 
@@ -164,7 +169,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                             
                               "apidatefmt": "%Y-%m-%d %H:%M:%S.%f"},
 
-                     #  Software Downloads - [SWDL]
+                     #  SWDL - [Software Downloads] 
                      "SWDL": {"products": {"CMA": "Cisco Meeting App",
                                            "CMS": "Cisco Meeting Server",
                                            "CMM": "Cisco Meeting Manager"},

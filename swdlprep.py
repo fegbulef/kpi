@@ -13,38 +13,17 @@ Description:  General routines to filter, format and prepare data for
 import os
 import sys
 
+import util    # user defined 
+import config  #
+
+import numpy as np
+import pandas as pd
+
 from datetime import timedelta, datetime, date
-
-try:
-    import numpy as np
-    import pandas as pd
-    
-except ImportError:
-    print("Please install the python 'pandas' and 'xlrd' modules")
-    sys.exit(-1)
-
-# user defined
-import util   
-import config
 
 
 # setup log
 kpilog = util.get_logger(config.autokpi["logname"])
-
-
-#-------------------------------------------------------------
-# Filter data by product 
-#-------------------------------------------------------------
-def get_swdl_product(df, product):
-    
-    pfilter = df.apply(lambda x: x.Product == product, axis=1)     
-    df_product = df[pfilter]
-
-    if df_product.empty:
-        return None
-
-
-    return df_product
 
 
 #----------------------------------------------------------------

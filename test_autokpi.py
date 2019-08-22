@@ -144,7 +144,7 @@ def test_import_from_acano_api():
 # 2.7 Check DB import: BEMS
 #@pytest.mark.skip(reason="Tested")
 def test_bems_import():
-#---------------------------------------------------------
+#--------------------------------------------------------- 
     bems_data = importdata.import_from_db(BEMSconfig, 'BEMS')
     assert len(bems_data) > 0
 
@@ -291,8 +291,8 @@ def test_get_swdl_product():
         filtered_df = swdlprep.filter_swdl(excel_df)
 
         # filter for 'CMM'
-        cmm1 = filtered_df[filtered_df.Product == 'CMM']
-        cmm2 = swdlprep.get_swdl_product(filtered_df, "CMM")
+        cmm1 = filtered_df[filtered_df.Product == "CMM"]
+        cmm2 = dataprep.get_product_data(filtered_df, 'CMM', SWDLconfig, 'SWDL')
 
         assert len(cmm1) == len(cmm2)
         
@@ -312,7 +312,7 @@ def test_get_swdl_grouped_data_by_date():
         filtered_df = swdlprep.filter_swdl(excel_df)
 
         # check for 'CMA' 18M
-        cma = swdlprep.get_swdl_product(filtered_df, "CMA")
+        cma = dataprep.get_product_data(filtered_df, 'CMA', SWDLconfig, 'SWDL')
         cma_grp = swdlprep.group_data_by_date(cma, '18M', 'CMA')
 
         # check column names for CMA releases
@@ -376,7 +376,7 @@ def test_fyq_kpi_chart():
     if isinstance(plot_by_fyq, pd.DataFrame):
         assert(len(plot_by_fyq) > 0)
 
-        kpi_chart = plotkpi.plot_kpi_chart(plot_by_fyq, 'CMA', chart_title, 'CFPD', "FYQ", True)
+        kpi_chart = plotkpi.plot_kpi_chart(plot_by_fyq, 'CMA', chart_title, 'CFPD', 'FYQ', True)
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
@@ -392,11 +392,11 @@ def test_cms_swdl_kpi_chart():
     
     if isinstance(excel_df, pd.DataFrame):
         filtered_df = swdlprep.filter_swdl(excel_df)
-        CMS = swdlprep.get_swdl_product(filtered_df, "CMS")
+        CMS = dataprep.get_product_data(filtered_df, 'CMS', SWDLconfig, 'SWDL')
 
         # plot data
-        df_plot = swdlprep.group_data_by_date(CMS, "allW", "CMS")
-        kpi_chart = plotkpi.plot_swdl_chart(df_plot, "CMS", "allW", True)
+        df_plot = swdlprep.group_data_by_date(CMS, 'allW', 'CMS')
+        kpi_chart = plotkpi.plot_swdl_chart(df_plot, 'CMS', 'allW', True)
 
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)

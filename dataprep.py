@@ -13,22 +13,21 @@ Description:  Functions to filter data, reformat dates and group data
 **************************************************************************"""
 
 import sys
+import pandas as pd
+import numpy as np
 
-try:
-    import xlrd
-    import pandas as pd
-    import numpy as np
-
-except ImportError:
-    print("Please make sure the following modules are installed: 'pandas'; 'xlrd'")
-    sys.exit(-1)
+import util    # user defined
+import config  #
 
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
-# user defined module
-import util
-import config   
+try:
+    import xlrd
+
+except ImportError:
+    print("Please install the following module: 'xlrd'")
+    sys.exit(-1)
 
 
 # set CMM release date
@@ -155,9 +154,8 @@ def get_mttr_days(df, months_fyq_df, toolcfg):
 
             df_calc[j] += daysopen
             
-
+    # create MTTR column
     mttr_df["MTTR"] = df_calc
-    
     
     return mttr_df
             
@@ -244,7 +242,6 @@ def get_mttr_fyq(df):
     mttr_fyq_df["MTTR"] = list(mttr.values())
 
     mttr_fyq_df.set_index("FYQ", inplace=True)
-
     
     return mttr_fyq_df
             
@@ -274,15 +271,19 @@ def get_open_defects_count(df):
 #------------------------------------------------------------
 def get_product_data(df, product, toolcfg, kpi):
 
-    # identify product type from first part of column e.g. CLIENT-7456
-    pcol = toolcfg["product_column"]
-    product_selection = df[pcol].str.split('-').str[0] == product
+    if kpi == 'SWDL':
+        pfilter = df.apply(lambda x: x.Product == product, axis=1)     
+    else:
+        # identify product type from first part of column e.g. CLIENT-7456
+        pcol = toolcfg["product_column"]
+        pfilter = df[pcol].str.split('-').str[0] == product
 
-    df_product = df[product_selection]
+    # apply filter
+    df_product = df[pfilter]
     if df_product.empty:
         return None    # no data for product
 
- 
+
     return df_product
             
 
@@ -360,8 +361,7 @@ def get_plot_data(df_open_grp, df_closed_grp, mttr_df, months_fyq_df):
     # get mttr summary
     df_plot_data = merge_mttr(df_grouped, mttr_df)
 
-    #print("Plot Data:\n", df_plot_data)
-    
+
     return df_plot_data
 
     

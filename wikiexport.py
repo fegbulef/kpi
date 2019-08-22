@@ -15,7 +15,7 @@ import time
 import argparse
 
 import util   # user defined
-import config # user defined
+import config # 
 
 from datetime import datetime
 
