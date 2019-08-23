@@ -167,7 +167,7 @@ def get_chart_labels(kpi):
     # JIRA kpis
     if kpi == 'IFD':
         axopen = 'All Defects Opened'
-    elif kpi == 'CFPD':
+    elif kpi == 'CPFD':
         axopen = 'Customer-Priority Defects Opened'
     elif kpi == 'CFD':
         axopen = 'CFDs Opened'
