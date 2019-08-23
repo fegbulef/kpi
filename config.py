@@ -50,7 +50,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                               "id_column": "Issue id",
                               "status_column": "Status",
                               
-                              "kpi": {"CFPD": {"wikitext": "Customer-Priority Found Defects",
+                              "kpi": {"CPFD": {"wikitext": "Customer-Priority Found Defects",
                                                
                                                "kpi_title": "XXX Customer Found Priority Defects by",
                                                "jql": "project in (CMM, SERVER, CLIENT) " \

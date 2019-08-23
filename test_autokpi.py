@@ -21,7 +21,7 @@ from datetime import datetime
 # user defined modules
 import util
 import config
-import importdata
+import dataimport
 import dataprep
 import swdlprep
 import plotkpi
@@ -54,15 +54,15 @@ test_months = {'Months': ['Aug-16','Sep-16','Oct-16','Nov-16','Dec-16','Jan-17',
 
 CWD = os.getcwd()
 
-CFPD_raw = os.path.join(CWD, "test_data", "CFPD_raw.csv")
-CFPD_reformat = os.path.join(CWD, "test_data", "CFPD_reformat.csv")
+CPFD_raw = os.path.join(CWD, "test_data", "CPFD_raw.csv")
+CPFD_reformat = os.path.join(CWD, "test_data", "CPFD_reformat.csv")
 
-CFPD_open = os.path.join(CWD, "test_data", "CFPD_open.csv")
-CFPD_closed = os.path.join(CWD, "test_data", "CFPD_closed.csv")
+CPFD_open = os.path.join(CWD, "test_data", "CPFD_open.csv")
+CPFD_closed = os.path.join(CWD, "test_data", "CPFD_closed.csv")
 
-CFPD_mttr_calcs = os.path.join(CWD, "test_data", "CFPD_mttr_calcs.csv")
-CFPD_mttr_days = os.path.join(CWD, "test_data", "CFPD_mttr_days.csv")
-CFPD_plot_data = os.path.join(CWD, "test_data", "CFPD_plot_data.csv")
+CPFD_mttr_calcs = os.path.join(CWD, "test_data", "CPFD_mttr_calcs.csv")
+CPFD_mttr_days = os.path.join(CWD, "test_data", "CPFD_mttr_days.csv")
+CPFD_plot_data = os.path.join(CWD, "test_data", "CPFD_plot_data.csv")
 
 
 #---------------------------------------------------------
@@ -78,7 +78,7 @@ def test_get_kpi_codes():
 @pytest.mark.skip(reason="Not required for Production")
 def test_jira_import_from_excel():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(JIRAconfig, 'JIRA', 'CFPD')
+    excel_df = dataimport.import_from_excel(JIRAconfig, 'JIRA', 'CPFD')
     assert isinstance(excel_df, pd.DataFrame)
     assert excel_df.columns.values.tolist() == ['Issue id','Status','Priority','Issue key','Created','Resolved']
     
@@ -88,7 +88,7 @@ def test_jira_import_from_excel():
 @pytest.mark.skip(reason="Not required for Production")
 def test_cdets_import_from_excel():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(CDETSconfig, 'CDETS', 'PSIRT')
+    excel_df = dataimport.import_from_excel(CDETSconfig, 'CDETS', 'PSIRT')
     assert isinstance(excel_df, pd.DataFrame)
     assert excel_df.columns.values.tolist() == ['Identifier','Status','SIR','Product','OPENED','CLOSED']
 
@@ -97,7 +97,7 @@ def test_cdets_import_from_excel():
 # 2.3 Check Excel file import: SWDL
 def test_swdl_import_from_excel():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    excel_df = dataimport.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
     assert isinstance(excel_df, pd.DataFrame)
 
     assert 'Download Date and Time'  in excel_df.columns.values.tolist()
@@ -110,9 +110,9 @@ def test_swdl_import_from_excel():
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_jira_api():
 #---------------------------------------------------------
-    jira_api = importdata.get_jira_client(JIRAconfig, 'CFPD')
+    jira_api = dataimport.get_jira_client(JIRAconfig, 'CPFD')
     if jira_api:
-        jira_df = importdata.get_jira_issues(JIRAconfig, jira_api, 'CFPD')
+        jira_df = dataimport.get_jira_issues(JIRAconfig, jira_api, 'CPFD')
         assert len(jira_df) > 0
             
 
@@ -121,9 +121,9 @@ def test_import_from_jira_api():
 #@pytest.mark.skip(reason="Tested")
 def test_import_from_qddts_webserver():
 #---------------------------------------------------------
-    qddts_json = importdata.get_api_data(CDETSconfig, 'PSIRT')
+    qddts_json = dataimport.get_api_data(CDETSconfig, 'PSIRT')
     if qddts_json:
-        results = importdata.import_qddts_results(CDETSconfig, qddts_json)
+        results = dataimport.import_qddts_results(CDETSconfig, qddts_json)
         assert len(results) > 0
     
 
@@ -133,10 +133,10 @@ def test_import_from_qddts_webserver():
 def test_import_from_acano_api():
 #---------------------------------------------------------
     parms = '2'     # VM Server
-    acano_json = importdata.get_api_data(ACANOconfig, 'ATC', parms)
+    acano_json = dataimport.get_api_data(ACANOconfig, 'ATC', parms)
 
     if acano_json:
-        results = importdata.import_acano_results(ACANOconfig, acano_json)
+        results = dataimport.import_acano_results(ACANOconfig, acano_json)
         assert len(results) > 0
 
     
@@ -145,7 +145,7 @@ def test_import_from_acano_api():
 #@pytest.mark.skip(reason="Tested")
 def test_bems_import():
 #--------------------------------------------------------- 
-    bems_data = importdata.import_from_db(BEMSconfig, 'BEMS')
+    bems_data = dataimport.import_from_db(BEMSconfig, 'BEMS')
     assert len(bems_data) > 0
 
         
@@ -153,7 +153,7 @@ def test_bems_import():
 # 3.1 Reformat import dates 
 def test_reformat_import_dates():
 #---------------------------------------------------------
-    import_df = pd.read_csv(CFPD_raw)   
+    import_df = pd.read_csv(CPFD_raw)   
     reformat_df = dataprep.reformat_df_dates(import_df, JIRAconfig, False)
     assert len(reformat_df) > 0
 
@@ -168,19 +168,19 @@ def test_reformat_import_dates():
 def test_open_closed_counts():
 #---------------------------------------------------------
 
-    import_df = pd.read_csv(CFPD_raw)     
+    import_df = pd.read_csv(CPFD_raw)     
     reformat_df = dataprep.reformat_df_dates(import_df, JIRAconfig, False)
     # test mttr for 'CLIENT' product
-    product_df = dataprep.get_product_data(reformat_df, 'CLIENT', JIRAconfig, 'CFPD')
+    product_df = dataprep.get_product_data(reformat_df, 'CLIENT', JIRAconfig, 'CPFD')
      
     # get open/closed counts for CLIENT
     df_open, df_closed = dataprep.get_product_counts(product_df)
 
-    test_open_df = pd.read_csv(CFPD_open)
+    test_open_df = pd.read_csv(CPFD_open)
     df_open.reset_index(inplace=True)
     assert df_open.equals(test_open_df)
 
-    test_closed_df = pd.read_csv(CFPD_closed)
+    test_closed_df = pd.read_csv(CPFD_closed)
     df_closed.reset_index(inplace=True)
     assert df_closed.equals(test_closed_df)
     
@@ -192,14 +192,14 @@ def test_mttr_days():
 #---------------------------------------------------------
     fyq_df = pd.DataFrame(test_months)
 
-    import_df = pd.read_csv(CFPD_raw)     
+    import_df = pd.read_csv(CPFD_raw)     
     reformat_df = dataprep.reformat_df_dates(import_df, JIRAconfig, False)
     # test mttr for 'CLIENT' product
-    product_df = dataprep.get_product_data(reformat_df, 'CLIENT', JIRAconfig, 'CFPD')
+    product_df = dataprep.get_product_data(reformat_df, 'CLIENT', JIRAconfig, 'CPFD')
      
     # check mttr days
     mttr_days_df = dataprep.get_mttr_days(product_df, fyq_df, JIRAconfig)
-    test_mttr_df = pd.read_csv(CFPD_mttr_days)
+    test_mttr_df = pd.read_csv(CPFD_mttr_days)
     assert mttr_days_df["MTTR"].equals(test_mttr_df["MTTR"])
 
 
@@ -208,8 +208,8 @@ def test_mttr_days():
 #@pytest.mark.skip(reason="Tested")
 def test_mttr_calc():
 #---------------------------------------------------------
-    plot_df = pd.read_csv(CFPD_plot_data)
-    test_mttr_calcs = pd.read_csv(CFPD_mttr_calcs)    
+    plot_df = pd.read_csv(CPFD_plot_data)
+    test_mttr_calcs = pd.read_csv(CPFD_mttr_calcs)    
     mttr_calcs = dataprep.get_mttr_calcs(plot_df)
     
     assert mttr_calcs["MTTR"].equals(test_mttr_calcs["MTTR"])
@@ -260,7 +260,7 @@ def test_get_plot_fyqs():
 #@pytest.mark.skip(reason="Tested")
 def test_filter_swdl():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    excel_df = dataimport.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
     assert isinstance(excel_df, pd.DataFrame)
     
     if isinstance(excel_df, pd.DataFrame):
@@ -284,7 +284,7 @@ def test_filter_swdl():
 #@pytest.mark.skip(reason="Tested")
 def test_get_swdl_product():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    excel_df = dataimport.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
     assert isinstance(excel_df, pd.DataFrame)
     
     if isinstance(excel_df, pd.DataFrame):
@@ -305,7 +305,7 @@ def test_get_swdl_product():
 #@pytest.mark.skip(reason="Tested")
 def test_get_swdl_grouped_data_by_date():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    excel_df = dataimport.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
     assert isinstance(excel_df, pd.DataFrame)
     
     if isinstance(excel_df, pd.DataFrame):
@@ -337,12 +337,12 @@ def test_get_swdl_grouped_data_by_date():
 #@pytest.mark.skip(reason="Tested")
 def test_monthly_kpi_chart():
 #---------------------------------------------------------
-    chart_title = JIRAconfig["kpi"]['CFPD']["kpi_title"].replace('XXX', 'CMA')
+    chart_title = JIRAconfig["kpi"]['CPFD']["kpi_title"].replace('XXX', 'CMA')
     mth_title = str.join(' ', [chart_title, 'Month\n'])
 
     # import plot data and mttr calculations
-    plot_df = pd.read_csv(CFPD_plot_data)
-    mttr_calcs = pd.read_csv(CFPD_mttr_calcs)    
+    plot_df = pd.read_csv(CPFD_plot_data)
+    mttr_calcs = pd.read_csv(CPFD_mttr_calcs)    
     months_df = pd.DataFrame(test_months)
 
     plot_by_month = dataprep.group_counts_by_month(plot_df, mttr_calcs, months_df)
@@ -350,7 +350,7 @@ def test_monthly_kpi_chart():
     if isinstance(plot_by_month, pd.DataFrame):
         assert(len(plot_by_month) > 0)
 
-        kpi_chart = plotkpi.plot_kpi_chart(plot_by_month, 'CMA', chart_title, 'CFPD', "Months", True)
+        kpi_chart = plotkpi.plot_kpi_chart(plot_by_month, 'CMA', chart_title, 'CPFD', "Months", True)
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
@@ -361,12 +361,12 @@ def test_monthly_kpi_chart():
 #@pytest.mark.skip(reason="Tested")
 def test_fyq_kpi_chart():
 #---------------------------------------------------------
-    chart_title = JIRAconfig["kpi"]['CFPD']["kpi_title"].replace('XXX', 'CMA')
+    chart_title = JIRAconfig["kpi"]['CPFD']["kpi_title"].replace('XXX', 'CMA')
     fyq_title = str.join(' ', [chart_title, 'Financial Quarter\n'])
 
     # import plot data and mttr calculations
-    plot_df = pd.read_csv(CFPD_plot_data)
-    mttr_calcs = pd.read_csv(CFPD_mttr_calcs)    
+    plot_df = pd.read_csv(CPFD_plot_data)
+    mttr_calcs = pd.read_csv(CPFD_mttr_calcs)    
     months_df = pd.DataFrame(test_months)
 
     # only report current fyq if at end  
@@ -376,7 +376,7 @@ def test_fyq_kpi_chart():
     if isinstance(plot_by_fyq, pd.DataFrame):
         assert(len(plot_by_fyq) > 0)
 
-        kpi_chart = plotkpi.plot_kpi_chart(plot_by_fyq, 'CMA', chart_title, 'CFPD', 'FYQ', True)
+        kpi_chart = plotkpi.plot_kpi_chart(plot_by_fyq, 'CMA', chart_title, 'CPFD', 'FYQ', True)
  
         assert 'png' in kpi_chart     # assert kpi_chart is a picture file
         assert os.path.exists(kpi_chart)
@@ -387,7 +387,7 @@ def test_fyq_kpi_chart():
 #@pytest.mark.skip(reason="Tested")
 def test_cms_swdl_kpi_chart():
 #---------------------------------------------------------
-    excel_df = importdata.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
+    excel_df = dataimport.import_from_excel(SWDLconfig, 'SWDL', 'SWDL')
     assert isinstance(excel_df, pd.DataFrame)
     
     if isinstance(excel_df, pd.DataFrame):

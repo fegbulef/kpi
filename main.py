@@ -22,7 +22,7 @@ from datetime import datetime, date
 # user defined modules
 import util
 import config
-import importdata  
+import dataimport  
 import dataprep
 import plotkpi
 import swdlprep    
@@ -79,7 +79,7 @@ def process_atc_schedules(toolcfg, tool, kpi):
     for sched_nm, sched_id in toolcfg["schedules"].items():
         kpilog.info("...processing ATC schedules for {}".format(sched_nm))
         
-        import_df = importdata.import_from_api(toolcfg, tool, kpi, sched_id)
+        import_df = dataimport.import_from_api(toolcfg, tool, kpi, sched_id)
 
         if import_df is None:
             kpilog.warning("Could not import data for {0} - {1}".format(kpi, sched_nm))
@@ -203,13 +203,13 @@ def main(kpi_dict, importfromxl):
                 continue
             
             if importfromxl:        # import data from (saved) excel workbook
-                import_df = importdata.import_from_excel(toolcfg, tool, kpi)
+                import_df = dataimport.import_from_excel(toolcfg, tool, kpi)
             elif kpi == 'BEMS':     # import from Oracle DB
-                import_df = importdata.import_from_db(toolcfg, kpi)
+                import_df = dataimport.import_from_db(toolcfg, kpi)
             elif kpi == 'SWDL':
-                import_df = importdata.import_from_excel(toolcfg, tool, kpi)
+                import_df = dataimport.import_from_excel(toolcfg, tool, kpi)
             else:                   # import data using tool api
-                import_df = importdata.import_from_api(toolcfg, tool, kpi)
+                import_df = dataimport.import_from_api(toolcfg, tool, kpi)
 
             if import_df is None:
                 kpilog.warning("Could not import data for {0}: {1}".format(tool, kpi))

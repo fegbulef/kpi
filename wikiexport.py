@@ -254,12 +254,12 @@ def get_kpifile(kpi, img_name):
     for file in os.listdir(kpisavedir):
         if not kpi in file and not kpi == "Dashboard": continue     # allow update of 'KPI Dashboard'
         
-        if (img_name in "CMSA-Month.PNG" and file == "CFPD_AllMonths.png") \
-           or (img_name in "CMSA-Quarter.PNG" and file == "CFPD_AllFYQ.png") \
-           or (img_name in "CMS-Month.PNG" and file == "CFPD_CMS_Months.png") \
-           or (img_name in "CMS-Quarter.PNG" and file == "CFPD_CMS_FYQ.png") \
-           or (img_name in "CMA-Month.PNG" and file == "CFPD_CMA_Months.png") \
-           or (img_name in "CMA-Quarter.PNG" and file == "CFPD_CMA_FYQ.png") \
+        if (img_name in "CMSA-Month.PNG" and file == "CPFD_AllMonths.png") \
+           or (img_name in "CMSA-Quarter.PNG" and file == "CPFD_AllFYQ.png") \
+           or (img_name in "CMS-Month.PNG" and file == "CPFD_CMS_Months.png") \
+           or (img_name in "CMS-Quarter.PNG" and file == "CPFD_CMS_FYQ.png") \
+           or (img_name in "CMA-Month.PNG" and file == "CPFD_CMA_Months.png") \
+           or (img_name in "CMA-Quarter.PNG" and file == "CPFD_CMA_FYQ.png") \
            or (img_name in "All-CFDs-Month.PNG" and file == "CFD_AllMonths.png") \
            or (img_name in "All-CFDs-Qtr.PNG" and file == "CFD_AllFYQ.png") \
            or (img_name in "CMS-CFDs-Month.PNG" and file == "CFD_CMS_Months.png") \
