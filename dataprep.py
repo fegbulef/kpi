@@ -5,10 +5,13 @@ Created by:   Fiona Egbulefu (Contractor)
 
 Created date: 16 April 2019
 
-Description:  Functions to filter data, reformat dates and group data 
+Description:  Functions to filter data, reformat dates and group data
+
               - Monthly count of open/closed defects
               - Quarterly (FYQ) count of open/closed defects
               - MTTR calculations
+              - ATC data prep
+              - BEMS data prep
 
 **************************************************************************"""
 
@@ -29,9 +32,6 @@ except ImportError:
     print("Please install the following module: 'xlrd'")
     sys.exit(-1)
 
-
-# set CMM release date
-CMM_RELDATE = pd.to_datetime("31/07/2017", format="%d/%m/%Y").date()
 
 kpilog = util.get_logger(config.autokpi["logname"])
 
@@ -169,6 +169,9 @@ def get_mttr_calcs(df, pcode=None):
 
     mttr_calc = [0] * len(df)
 
+    # set CMM release date
+    cmm_reldate = pd.to_datetime(config.autokpi["cmm_reldate"], format="%d/%m/%Y").date()
+
     days = 0
     mttr = 0
     closed_cnt = 0
@@ -181,7 +184,7 @@ def get_mttr_calcs(df, pcode=None):
 
         month_start, month_end = util.get_month_start_end(data.iloc[0].Months)
 
-        # for CMM, start mttr calc from release date
+        # for CMM, start mttr calc from CMM release date
         if pcode == 'CMM':
             if month_start < CMM_RELDATE: continue
        

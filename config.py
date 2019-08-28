@@ -30,7 +30,9 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
 
            "savedir_test": "output",      
              
-           "fyq_start": "01/08/2016",       # Start FYQ 
+           "fyq_start": "01/08/2016",       # Start FYQ
+
+           "cmm_reldate": "31/07/2017",     # CMM Release date
 
            "fyqs_to_plot": 14,              
            "months_to_plot": -18,           
