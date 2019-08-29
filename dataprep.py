@@ -186,7 +186,7 @@ def get_mttr_calcs(df, pcode=None):
 
         # for CMM, start mttr calc from CMM release date
         if pcode == 'CMM':
-            if month_start < CMM_RELDATE: continue
+            if month_start < cmm_reldate: continue
        
         # sum values rolling forward
         days += (month_end - month_start).days
