@@ -215,8 +215,10 @@ def navigate_to_kpi(browser, linktext, wikitype):
         linkpages = browser.find_elements_by_partial_link_text(linktext)
 
         for linkpage in linkpages:
-            if wikitype == 'Test' and not linkpage.text[:4] == 'Test' \
-               or linkpage.text[:4] == 'Test' and not wikitype == 'Test':
+            if wikitype == 'Test' and not linkpage.text[:4] == 'Test':
+                continue
+
+            if linkpage.text[:3] == 'Old':      # ignore 'original' kpi wikipages
                 continue
 
             kpipage = linkpage

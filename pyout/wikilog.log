@@ -1,0 +1,236 @@
+29-Aug-19 09:26:46 - INFO - wikiexport.py - main: Start Wiki upload: https://confluence-eng-gpk2.cisco.com/conf/display/UXB/Test+Dashboard+KPIs....
+29-Aug-19 09:26:58 - INFO - wikiexport.py - log_into_wiki: User kpi.gen Login: OK
+29-Aug-19 09:26:58 - DEBUG - wikiexport.py - main: KPI Months: from February 2018 to July 2019; KPI FYQs: from FY17 Q1 to FY19 Q4 KPI End Month: July 2019
+29-Aug-19 09:27:05 - DEBUG - wikiexport.py - main: SWDL KPI texts: {'End': 'July 2019', 'All': ' from August 2016 to July 2019.', '18': ' from February 2018 to July 2019.', '12': ' from August 2018 to July 2019.'}
+29-Aug-19 09:27:06 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Product Quality - Customer-Priority Found Defects ....
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_AllMonths.png
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_AllFYQ.png
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_CMS_Months.png
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_CMS_FYQ.png
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_CMA_Months.png
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_CMA_FYQ.png
+29-Aug-19 09:27:09 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:27:09 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMSA-Month.PNG /home/fiona/kpi/pyout/CPFD_AllMonths.png
+29-Aug-19 09:27:23 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_AllMonths.png uploaded successfully
+29-Aug-19 09:27:23 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMSA-Quarter.PNG /home/fiona/kpi/pyout/CPFD_AllFYQ.png
+29-Aug-19 09:27:36 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_AllFYQ.png uploaded successfully
+29-Aug-19 09:27:36 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-Month.PNG /home/fiona/kpi/pyout/CPFD_CMS_Months.png
+29-Aug-19 09:27:50 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_CMS_Months.png uploaded successfully
+29-Aug-19 09:27:50 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-Quarter.PNG /home/fiona/kpi/pyout/CPFD_CMS_FYQ.png
+29-Aug-19 09:28:03 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_CMS_FYQ.png uploaded successfully
+29-Aug-19 09:28:03 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-Month.PNG /home/fiona/kpi/pyout/CPFD_CMA_Months.png
+29-Aug-19 09:28:16 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_CMA_Months.png uploaded successfully
+29-Aug-19 09:28:16 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-Quarter.PNG /home/fiona/kpi/pyout/CPFD_CMA_FYQ.png
+29-Aug-19 09:28:30 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_CMA_FYQ.png uploaded successfully
+29-Aug-19 09:28:30 - INFO - wikiexport.py - main: CPFD kpis uploaded successfully
+29-Aug-19 09:28:33 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:28:33 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:28:43 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: Product Quality - Customer-Priority Found Defects: July 2019
+29-Aug-19 09:28:43 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: Product Quality - Customer-Priority Found Defects: July 2019
+29-Aug-19 09:28:52 - INFO - wikiexport.py - update_kpi_text: Customer-Priority Found Defects panel header updated
+29-Aug-19 09:29:05 - INFO - wikiexport.py - update_kpi_text: All Customer-Priority Found Defects kpi texts updated
+29-Aug-19 09:29:08 - INFO - wikiexport.py - publish_updates: All CPFD updates published!
+29-Aug-19 09:29:13 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Development Quality - Internally Found Defects (IFDs) ....
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_AllMonths.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_AllFYQ.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMS_Months.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMS_FYQ.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMA_Months.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMA_FYQ.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMM_Months.png
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_CMM_FYQ.png
+29-Aug-19 09:29:16 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:29:16 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-Month.PNG /home/fiona/kpi/pyout/IFD_AllMonths.png
+29-Aug-19 09:29:29 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_AllMonths.png uploaded successfully
+29-Aug-19 09:29:29 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-Qtr.PNG /home/fiona/kpi/pyout/IFD_AllFYQ.png
+29-Aug-19 09:29:43 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_AllFYQ.png uploaded successfully
+29-Aug-19 09:29:43 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-IFD-Month.PNG /home/fiona/kpi/pyout/IFD_CMS_Months.png
+29-Aug-19 09:29:56 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMS_Months.png uploaded successfully
+29-Aug-19 09:29:56 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-IFD-Qtr.PNG /home/fiona/kpi/pyout/IFD_CMS_FYQ.png
+29-Aug-19 09:30:09 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMS_FYQ.png uploaded successfully
+29-Aug-19 09:30:09 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-IFD-Month.PNG /home/fiona/kpi/pyout/IFD_CMA_Months.png
+29-Aug-19 09:30:23 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMA_Months.png uploaded successfully
+29-Aug-19 09:30:23 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-IFD-Qtr.PNG /home/fiona/kpi/pyout/IFD_CMA_FYQ.png
+29-Aug-19 09:30:36 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMA_FYQ.png uploaded successfully
+29-Aug-19 09:30:36 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-IFD-Month.PNG /home/fiona/kpi/pyout/IFD_CMM_Months.png
+29-Aug-19 09:30:50 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMM_Months.png uploaded successfully
+29-Aug-19 09:30:50 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-IFD-Qtr.PNG /home/fiona/kpi/pyout/IFD_CMM_FYQ.png
+29-Aug-19 09:31:04 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_CMM_FYQ.png uploaded successfully
+29-Aug-19 09:31:04 - INFO - wikiexport.py - main: IFD kpis uploaded successfully
+29-Aug-19 09:31:08 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:31:08 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:31:18 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: Development Quality - Internally Found Defects (IFDs): July 2019
+29-Aug-19 09:31:18 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: Development Quality - Internally Found Defects (IFDs): July 2019
+29-Aug-19 09:31:28 - INFO - wikiexport.py - update_kpi_text: Internally Found Defects panel header updated
+29-Aug-19 09:31:44 - INFO - wikiexport.py - update_kpi_text: All Internally Found Defects kpi texts updated
+29-Aug-19 09:31:47 - INFO - wikiexport.py - publish_updates: All IFD updates published!
+29-Aug-19 09:31:52 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Product Quality - Customer Found Defects (CFDs) ....
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_AllMonths.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_AllFYQ.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMS_Months.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMS_FYQ.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMA_Months.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMA_FYQ.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMM_Months.png
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_CMM_FYQ.png
+29-Aug-19 09:31:55 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:31:55 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-CFDs-Month.PNG /home/fiona/kpi/pyout/CFD_AllMonths.png
+29-Aug-19 09:32:09 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_AllMonths.png uploaded successfully
+29-Aug-19 09:32:09 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-CFDs-Qtr.PNG /home/fiona/kpi/pyout/CFD_AllFYQ.png
+29-Aug-19 09:32:22 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_AllFYQ.png uploaded successfully
+29-Aug-19 09:32:22 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-CFDs-Month.PNG /home/fiona/kpi/pyout/CFD_CMS_Months.png
+29-Aug-19 09:32:36 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMS_Months.png uploaded successfully
+29-Aug-19 09:32:36 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-CFDs-Qtr.PNG /home/fiona/kpi/pyout/CFD_CMS_FYQ.png
+29-Aug-19 09:32:49 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMS_FYQ.png uploaded successfully
+29-Aug-19 09:32:49 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-CFDs-Month.PNG /home/fiona/kpi/pyout/CFD_CMA_Months.png
+29-Aug-19 09:33:03 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMA_Months.png uploaded successfully
+29-Aug-19 09:33:03 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-CFDs-Qtr.PNG /home/fiona/kpi/pyout/CFD_CMA_FYQ.png
+29-Aug-19 09:33:16 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMA_FYQ.png uploaded successfully
+29-Aug-19 09:33:16 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-CFDs-Month.PNG /home/fiona/kpi/pyout/CFD_CMM_Months.png
+29-Aug-19 09:33:29 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMM_Months.png uploaded successfully
+29-Aug-19 09:33:29 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-CFDs-Qtr.PNG /home/fiona/kpi/pyout/CFD_CMM_FYQ.png
+29-Aug-19 09:33:43 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_CMM_FYQ.png uploaded successfully
+29-Aug-19 09:33:43 - INFO - wikiexport.py - main: CFD kpis uploaded successfully
+29-Aug-19 09:33:46 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:33:46 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:33:56 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: Product Quality - Customer Found Defects (CFDs): July 2019
+29-Aug-19 09:33:56 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: Product Quality - Customer Found Defects (CFDs): July 2019
+29-Aug-19 09:34:06 - INFO - wikiexport.py - update_kpi_text: Customer Found Defects panel header updated
+29-Aug-19 09:34:22 - INFO - wikiexport.py - update_kpi_text: All Customer Found Defects kpi texts updated
+29-Aug-19 09:34:26 - INFO - wikiexport.py - publish_updates: All CFD updates published!
+29-Aug-19 09:34:30 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Development Quality - PSIRTs ....
+29-Aug-19 09:34:33 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/PSIRT_AllMonths.png
+29-Aug-19 09:34:33 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/PSIRT_CMS_Months.png
+29-Aug-19 09:34:33 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/PSIRT_CMA_Months.png
+29-Aug-19 09:34:33 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/PSIRT_CMM_Months.png
+29-Aug-19 09:34:33 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:34:33 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMSAM-PSIRT.PNG /home/fiona/kpi/pyout/PSIRT_AllMonths.png
+29-Aug-19 09:34:47 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/PSIRT_AllMonths.png uploaded successfully
+29-Aug-19 09:34:47 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-PSIRT.PNG /home/fiona/kpi/pyout/PSIRT_CMS_Months.png
+29-Aug-19 09:35:00 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/PSIRT_CMS_Months.png uploaded successfully
+29-Aug-19 09:35:00 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-PSIRT.PNG /home/fiona/kpi/pyout/PSIRT_CMA_Months.png
+29-Aug-19 09:35:13 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/PSIRT_CMA_Months.png uploaded successfully
+29-Aug-19 09:35:13 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-PSIRT.PNG /home/fiona/kpi/pyout/PSIRT_CMM_Months.png
+29-Aug-19 09:35:28 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/PSIRT_CMM_Months.png uploaded successfully
+29-Aug-19 09:35:28 - INFO - wikiexport.py - main: PSIRT kpis uploaded successfully
+29-Aug-19 09:35:31 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:35:31 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:35:41 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: Development Quality PSIRTs: July 2019
+29-Aug-19 09:35:41 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: Development Quality PSIRTs: July 2019
+29-Aug-19 09:35:50 - INFO - wikiexport.py - update_kpi_text: PSIRTs panel header updated
+29-Aug-19 09:35:59 - INFO - wikiexport.py - update_kpi_text: All PSIRTs kpi texts updated
+29-Aug-19 09:36:02 - INFO - wikiexport.py - publish_updates: All PSIRT updates published!
+29-Aug-19 09:36:07 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Development Quality - Test Automation ....
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ServerTests.png
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ClientTests.png
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ServerPasses.png
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ClientPasses.png
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_%ServerPasses.png
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_%ClientPasses.png
+29-Aug-19 09:36:10 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:36:10 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ServerTests.PNG /home/fiona/kpi/pyout/ATC_ServerTests.png
+29-Aug-19 09:36:23 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ServerTests.png uploaded successfully
+29-Aug-19 09:36:23 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ClientTests.PNG /home/fiona/kpi/pyout/ATC_ClientTests.png
+29-Aug-19 09:36:37 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ClientTests.png uploaded successfully
+29-Aug-19 09:36:37 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ServerPasses.PNG /home/fiona/kpi/pyout/ATC_ServerPasses.png
+29-Aug-19 09:36:50 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ServerPasses.png uploaded successfully
+29-Aug-19 09:36:50 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ClientPasses.PNG /home/fiona/kpi/pyout/ATC_ClientPasses.png
+29-Aug-19 09:37:04 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ClientPasses.png uploaded successfully
+29-Aug-19 09:37:04 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: %ATC.PNG /home/fiona/kpi/pyout/ATC_%ServerPasses.png
+29-Aug-19 09:37:18 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_%ServerPasses.png uploaded successfully
+29-Aug-19 09:37:18 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: image2019-7-4_17-2-40.png /home/fiona/kpi/pyout/ATC_%ClientPasses.png
+29-Aug-19 09:37:32 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_%ClientPasses.png uploaded successfully
+29-Aug-19 09:37:32 - INFO - wikiexport.py - main: ATC kpis uploaded successfully
+29-Aug-19 09:37:35 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:37:35 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:37:45 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: Development Quality - Test Automation: July 2019
+29-Aug-19 09:37:45 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: Development Quality - Test Automation: July 2019
+29-Aug-19 09:37:55 - INFO - wikiexport.py - update_kpi_text: Test Automation panel header updated
+29-Aug-19 09:38:11 - INFO - wikiexport.py - update_kpi_text: All Test Automation kpi texts updated
+29-Aug-19 09:38:14 - INFO - wikiexport.py - publish_updates: All ATC updates published!
+29-Aug-19 09:38:19 - ERROR - wikiexport.py - navigate_to_kpi: Unable to navigate to Escalations
+29-Aug-19 09:38:19 - ERROR - wikiexport.py - update_kpi_page: No kpis updated for Escalations - BEMS
+29-Aug-19 09:38:20 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Corporate Quality - CMA Software Downloads ....
+29-Aug-19 09:38:23 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMA_18M.png
+29-Aug-19 09:38:23 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMA_12W.png
+29-Aug-19 09:38:23 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMA_allW.png
+29-Aug-19 09:38:23 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:38:23 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-18M.PNG /home/fiona/kpi/pyout/SWDL_CMA_18M.png
+29-Aug-19 09:38:37 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMA_18M.png uploaded successfully
+29-Aug-19 09:38:37 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-12W.PNG /home/fiona/kpi/pyout/SWDL_CMA_12W.png
+29-Aug-19 09:38:51 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMA_12W.png uploaded successfully
+29-Aug-19 09:38:51 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMA-AllW.PNG /home/fiona/kpi/pyout/SWDL_CMA_allW.png
+29-Aug-19 09:39:04 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMA_allW.png uploaded successfully
+29-Aug-19 09:39:04 - INFO - wikiexport.py - main: SWDL_CMA kpis uploaded successfully
+29-Aug-19 09:39:08 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:39:08 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:39:18 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: CMA Software Downloads: June 2019
+29-Aug-19 09:39:18 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: CMA Software Downloads: July 2019
+29-Aug-19 09:39:27 - INFO - wikiexport.py - update_kpi_text: CMA Software Downloads panel header updated
+29-Aug-19 09:39:33 - INFO - wikiexport.py - update_kpi_text: All CMA Software Downloads kpi texts updated
+29-Aug-19 09:39:37 - INFO - wikiexport.py - publish_updates: All SWDL_CMA updates published!
+29-Aug-19 09:39:41 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Corporate Quality - CMS Software Downloads ....
+29-Aug-19 09:39:44 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMS_18M.png
+29-Aug-19 09:39:44 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMS_12W.png
+29-Aug-19 09:39:44 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMS_allW.png
+29-Aug-19 09:39:44 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:39:44 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-18M.PNG /home/fiona/kpi/pyout/SWDL_CMS_18M.png
+29-Aug-19 09:39:58 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMS_18M.png uploaded successfully
+29-Aug-19 09:39:58 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-12W.PNG /home/fiona/kpi/pyout/SWDL_CMS_12W.png
+29-Aug-19 09:40:11 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMS_12W.png uploaded successfully
+29-Aug-19 09:40:11 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMS-AllW.PNG /home/fiona/kpi/pyout/SWDL_CMS_allW.png
+29-Aug-19 09:40:25 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMS_allW.png uploaded successfully
+29-Aug-19 09:40:25 - INFO - wikiexport.py - main: SWDL_CMS kpis uploaded successfully
+29-Aug-19 09:40:28 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:40:28 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:40:38 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: CMS Software Downloads: June 2019
+29-Aug-19 09:40:38 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: CMS Software Downloads: July 2019
+29-Aug-19 09:40:48 - INFO - wikiexport.py - update_kpi_text: CMS Software Downloads panel header updated
+29-Aug-19 09:40:54 - INFO - wikiexport.py - update_kpi_text: All CMS Software Downloads kpi texts updated
+29-Aug-19 09:40:57 - INFO - wikiexport.py - publish_updates: All SWDL_CMS updates published!
+29-Aug-19 09:41:02 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Corporate Quality - CMM Software Downloads ....
+29-Aug-19 09:41:05 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMM_18M.png
+29-Aug-19 09:41:05 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMM_12W.png
+29-Aug-19 09:41:05 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/SWDL_CMM_allW.png
+29-Aug-19 09:41:05 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:41:05 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-18M.PNG /home/fiona/kpi/pyout/SWDL_CMM_18M.png
+29-Aug-19 09:41:18 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMM_18M.png uploaded successfully
+29-Aug-19 09:41:18 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-12W.PNG /home/fiona/kpi/pyout/SWDL_CMM_12W.png
+29-Aug-19 09:41:32 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMM_12W.png uploaded successfully
+29-Aug-19 09:41:32 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMM-AllW.PNG /home/fiona/kpi/pyout/SWDL_CMM_allW.png
+29-Aug-19 09:41:45 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/SWDL_CMM_allW.png uploaded successfully
+29-Aug-19 09:41:45 - INFO - wikiexport.py - main: SWDL_CMM kpis uploaded successfully
+29-Aug-19 09:41:48 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:41:48 - DEBUG - wikiexport.py - update_kpi_panel_header: Updating panel header....
+29-Aug-19 09:41:58 - DEBUG - wikiexport.py - update_kpi_panel_header: ...old title: CMM Software Downloads: June 2019
+29-Aug-19 09:41:58 - DEBUG - wikiexport.py - update_kpi_panel_header: ...new title: CMM Software Downloads: July 2019
+29-Aug-19 09:42:08 - INFO - wikiexport.py - update_kpi_text: CMM Software Downloads panel header updated
+29-Aug-19 09:42:14 - INFO - wikiexport.py - update_kpi_text: All CMM Software Downloads kpi texts updated
+29-Aug-19 09:42:17 - INFO - wikiexport.py - publish_updates: All SWDL_CMM updates published!
+29-Aug-19 09:42:22 - INFO - wikiexport.py - navigate_to_kpi: Navigate to Test Dashboard KPIs ....
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CPFD_AllMonths.png
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/CFD_AllMonths.png
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/PSIRT_AllMonths.png
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/IFD_AllMonths.png
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ServerTests.png
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - get_kpifile: Chart exists: /home/fiona/kpi/pyout/ATC_ClientTests.png
+29-Aug-19 09:42:25 - INFO - wikiexport.py - update_kpi_page: Prepare page for updates...
+29-Aug-19 09:42:25 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMSA-Month.PNG /home/fiona/kpi/pyout/CPFD_AllMonths.png
+29-Aug-19 09:42:38 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CPFD_AllMonths.png uploaded successfully
+29-Aug-19 09:42:38 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-CFDs-Month.PNG /home/fiona/kpi/pyout/CFD_AllMonths.png
+29-Aug-19 09:42:52 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/CFD_AllMonths.png uploaded successfully
+29-Aug-19 09:42:52 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: CMSAM-PSIRT.PNG /home/fiona/kpi/pyout/PSIRT_AllMonths.png
+29-Aug-19 09:43:06 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/PSIRT_AllMonths.png uploaded successfully
+29-Aug-19 09:43:06 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: All-Month.PNG /home/fiona/kpi/pyout/IFD_AllMonths.png
+29-Aug-19 09:43:20 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/IFD_AllMonths.png uploaded successfully
+29-Aug-19 09:43:20 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ServerTests.PNG /home/fiona/kpi/pyout/ATC_ServerTests.png
+29-Aug-19 09:43:34 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ServerTests.png uploaded successfully
+29-Aug-19 09:43:34 - DEBUG - wikiexport.py - update_kpi_page: Image selected for update: ATC-ClientTests.PNG /home/fiona/kpi/pyout/ATC_ClientTests.png
+29-Aug-19 09:43:47 - INFO - wikiexport.py - upload_kpi: /home/fiona/kpi/pyout/ATC_ClientTests.png uploaded successfully
+29-Aug-19 09:43:47 - INFO - wikiexport.py - main: Dashboard kpis uploaded successfully
+29-Aug-19 09:43:50 - DEBUG - wikiexport.py - update_kpi_text: Updating KPI text....
+29-Aug-19 09:43:50 - INFO - wikiexport.py - update_kpi_text: Test Dashboard KPIs panel header updated
+29-Aug-19 09:44:03 - INFO - wikiexport.py - update_kpi_text: All Test Dashboard KPIs kpi texts updated
+29-Aug-19 09:44:06 - INFO - wikiexport.py - publish_updates: All Dashboard updates published!
+29-Aug-19 09:44:09 - INFO - wikiexport.py - <module>: 
+29-Aug-19 09:44:09 - INFO - wikiexport.py - <module>: Finished!!
