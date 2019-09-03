@@ -123,7 +123,7 @@ def get_config_linktext():
                 for product in kpis[kpi]["wikitext"]:
                     kpilinks[kpi + '_' + product] = kpis[kpi]["wikitext"][product]
             else:
-                kpilinks[kpi] = kpis[kpi]["wikitext"]
+                kpilinks[kpi] = kpis[kpi].get("wikitext", None)
             
 
     return kpilinks
@@ -534,7 +534,7 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
 
                 # setup kpi text with current dates
                 if "SWDL" in kpi:
-                    if "August" in h3.text:
+                    if "August 2016" in h3.text:
                         html = h3.get_attribute("innerHTML").split(",")
                         updtext = ''.join([",", swdl_kpi_text["All"]])
                        
@@ -726,6 +726,7 @@ def main(wikitype):
             
             # loop through KPI page links
             for kpi, linktext in kpilinks.items():
+                if linktext is None: continue     # 'wikitext' not available 
 
                 if "SWDL" in kpi:
                     if not swdl_kpi_text:
