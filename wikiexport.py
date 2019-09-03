@@ -282,12 +282,15 @@ def get_kpifile(kpi, img_name):
            or (img_name in "CMA-IFD-Qtr.PNG" and file == "IFD_CMA_FYQ.png") \
            or (img_name in "CMM-IFD-Month.PNG" and file == "IFD_CMM_Months.png") \
            or (img_name in "CMM-IFD-Qtr.PNG" and file == "IFD_CMM_FYQ.png") \
+           or (img_name in "CMA-1D.PNG" and file == "SWDL_CMA_1D.png") \
            or (img_name in "CMA-18M.PNG" and file == "SWDL_CMA_18M.png") \
            or (img_name in "CMA-12W.PNG" and file == "SWDL_CMA_12W.png") \
            or (img_name in "CMA-AllW.PNG" and file == "SWDL_CMA_allW.png") \
+           or (img_name in "CMS-1D.PNG" and file == "SWDL_CMS_1D.png") \
            or (img_name in "CMS-18M.PNG" and file == "SWDL_CMS_18M.png") \
            or (img_name in "CMS-12W.PNG" and file == "SWDL_CMS_12W.png") \
            or (img_name in "CMS-AllW.PNG" and file == "SWDL_CMS_allW.png") \
+           or (img_name in "CMM-1D.PNG" and file == "SWDL_CMM_1D.png") \
            or (img_name in "CMM-18M.PNG" and file == "SWDL_CMM_18M.png") \
            or (img_name in "CMM-12W.PNG" and file == "SWDL_CMM_12W.png") \
            or (img_name in "CMM-AllW.PNG" and file == "SWDL_CMM_allW.png") \
@@ -526,8 +529,11 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
             divs = browser.find_elements_by_xpath(xpath)
         
             for div in divs:        # div -> h3 -> text
-                h3 = div.find_element_by_tag_name("h3")
-                if not h3: continue
+                try:
+                    h3 = div.find_element_by_tag_name("h3")
+                    if not h3: continue
+                except Exception as e:
+                    continue
 
                 html = None
                 updtext = ""
