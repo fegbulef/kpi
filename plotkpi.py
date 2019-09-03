@@ -185,6 +185,18 @@ def get_chart_labels(kpi):
 
 
 #----------------------------------------------------------------
+# Delete file
+#----------------------------------------------------------------
+def delete_file(filename):
+
+    if os.path.exists(filename):
+        os.remove(filename)
+        time.sleep(2)   # make sure file is deleted
+
+    return
+
+
+#----------------------------------------------------------------
 # Derive chart name
 # return string (filename)
 #----------------------------------------------------------------
@@ -216,11 +228,33 @@ def get_filename(kpi, figname, product, istest):
     savedir = config.autokpi["savedir_test"] if istest else config.autokpi["savedir"]
     filename = os.path.join(cwd, savedir, figname)
 
-    if os.path.exists(filename):
-        os.remove(filename)
-        time.sleep(2)   # make sure file is deleted 
 
     return filename
+
+
+#-------------------------------------
+# Output plot data
+#-------------------------------------
+def output_plot_data(df, kpi, savefile):
+
+    datafile = savefile
+
+    if kpi in ['CPFD', 'CFD', 'PSIRT']:
+        datafile = savefile.replace('.png', '_Table.csv')
+        
+    elif kpi == 'ATC':
+        if 'Server' in savefile:
+            datafile = savefile.replace('ServerTests.png', 'CMS_Table.csv')
+        else:
+            datafile = savefile.replace('ClientTests.png', 'CMA_Table.csv')
+
+    if datafile == savefile:    # could not rename file
+        return
+    
+    delete_file(datafile)
+    df.to_csv(datafile, sep=',', index=False)
+
+    return
 
 
 #----------------------------------------------------------------
@@ -380,9 +414,14 @@ def plot_kpi_chart(df, project_code, chart_title, kpi, xaxis_str, istest=False):
         fig.tight_layout()
          
         savefile = get_filename(kpi, xaxis_str, project_code, istest)
+        delete_file(savefile)
+
         fig.savefig(savefile)
 
-        #plt.show()
+        # output plot data:
+        if kpi in ['CFD', 'CPFD', 'PSIRT'] and 'AllMonths' in savefile:
+            output_plot_data(df, kpi, savefile)
+        
 
     except Exception as e:
         
@@ -474,8 +513,14 @@ def plot_atc_chart(df, product, chart_title, chart_key, istest=False):
         fig.tight_layout()
          
         savefile = get_filename('ATC', figname, product, istest)
+        delete_file(savefile)
+        
         fig.savefig(savefile)
 
+        # output plot data:
+        if 'Tests' in savefile:
+            output_plot_data(df, 'ATC', savefile)
+       
         #plt.show()
 
     except Exception as e:
@@ -552,6 +597,8 @@ def plot_bems_chart(df, chart_title, chart_key, istest=False):
 
         # save chart
         savefile = get_filename("BEMS", chart_key, '', istest)
+        delete_file(savefile)
+        
         fig.savefig(savefile)
     
 
@@ -640,6 +687,8 @@ def plot_swdl_chart(df, product, period, istest=False):
 
         # save chart
         savefile = get_filename('SWDL', period, product, istest)
+        delete_file(savefile)
+        
         fig.savefig(savefile)
         
         plt.close(fig)
