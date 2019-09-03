@@ -153,9 +153,7 @@ autokpi = {"auth": {"user": "kpi.gen", "password": "UXB20-19.genQ1"},       # au
                                            "CMS": ["Cisco Meeting Server (CMS)"],
                                            "CMM": ["CMM (Meeting Management)"]},
 
-                              "kpi": {"BEMS": {"wikitext": "Escalations",
-
-                                               "kpi_title": "Infrastructure Service Requests (SRs), by XXX",
+                              "kpi": {"BEMS": {"kpi_title": "Infrastructure Service Requests (SRs), by XXX",
 
                                                "arraysize": 5000,
 
