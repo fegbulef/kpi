@@ -154,7 +154,7 @@ def process_swdl_data(df, toolcfg):
             continue 
 
         # plot kpi by period
-        for period in ['12W', '18M', 'allW']:
+        for period in ['12W', '18M', 'allW', '1D']:
             df_plot = swdlprep.group_data_by_date(df_product, period, product)
   
             kpi_chart = plotkpi.plot_swdl_chart(df_plot, product, period)
