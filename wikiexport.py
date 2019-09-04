@@ -516,8 +516,10 @@ def update_kpi_text(browser, kpi, linktext, wikitype, by_month_text, by_fyq_text
         browser.switch_to.frame(frame)
         switch_to_frame = True
 
+        panel_month = swdl_kpi_text["End"] if "SWDL" in kpi else end_month
+
         # update panel header  
-        if update_kpi_panel_header(browser, kpi, end_month):
+        if update_kpi_panel_header(browser, kpi, panel_month):
             wikilog.info("{} panel header updated".format(linktext))
 
             # switch back to editing frame
