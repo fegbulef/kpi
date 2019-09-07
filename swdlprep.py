@@ -396,7 +396,7 @@ def get_export_downloadfile(df):
 
     # join columns for Product/Version
     for i in decode_df.index:
-    
+        if not decode_df.Product[i]: continue           # ignore invalid products ??
         prodversion[i] = decode_df.Product[i] + sep + str(decode_df.R[i]) + sep + str(decode_df.V[i]) + sep + str(decode_df.M[i])
 
         if not decode_df.Ext[i] is None:
@@ -427,7 +427,7 @@ def get_export_downloadfile(df):
     for i in range(len(vsph_ver)):
         if not vsphere[i]: continue
         ver = vsphere[i].split('-')[1].split('_')
-        vsph_ver[i] = ''.join([ver[0], '.', ver[1]])
+        vsph_ver[i] = ''.join([ver[0], '.', '0' if len(ver) < 2 else ver[1]])
         vsphere[i] = 'vSphere'
         
     export_df["vSphere"] = vsphere
