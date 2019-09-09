@@ -662,7 +662,9 @@ def plot_swdl_chart(df, product, period, istest=False):
             # set interval to display labels
             interval = 7
             if period[:-1].isdigit():
-                if int(period[:-1]) < 18:
+                if int(period[:-1]) == 1:
+                    interval = 2
+                elif int(period[:-1]) < 18:
                     interval = 4
              
             ax1.set_xticks(ax1.get_xticks()[::interval])

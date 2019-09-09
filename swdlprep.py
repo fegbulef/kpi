@@ -233,7 +233,7 @@ def apply_filters(df):
     df = df[~pdf]
 
     # exclude filenames with no version e.g. '../Cisco_Meeting.dmg'
-    invalidfile = df['Full File Name'].map(lambda x: x.endswith('Cisco_Meeting.dmg'))
+    invalidfile = df['Full File Name'].map(lambda x: x.endswith('Cisco_Meeting.dmg') or x.endswith('ciscomeeting.msi'))
     df = df[~invalidfile]
     
     # set date filter
@@ -315,9 +315,9 @@ def decode_filename(df):
 
                     if filesplit.V[i].isdigit():
                         df_dict['V'][i] = filesplit.V[i]
+
                     else:
                         ver = filesplit.V[i].split('.')
-
                         if len(ver) > 1:
                             df_dict['V'][i] = ver[0]
                             df_dict['Type'][i] = ver[1]
@@ -340,10 +340,11 @@ def decode_filename(df):
 
                     if ver[0].isdigit():
                         df_dict['M'][i] = ver[0]
-                        df_dict['Type'][i] = ver[1]
                     else:
                         df_dict['M'][i] = '0'
                         df_dict['Ext'][i] = ver[0]
+
+                    if len(ver) > 1:
                         df_dict['Type'][i] = ver[1]
                     
             else:
@@ -355,10 +356,11 @@ def decode_filename(df):
 
                         if ver[0].isdigit():
                             df_dict['M'][i] = ver[0]
-                            df_dict['Type'][i] = ver[1]
                         else:
                             df_dict['M'][i] = '0'
                             df_dict['Ext'][i] = ver[0]
+
+                        if len(ver) > 1:
                             df_dict['Type'][i] = ver[1]
 
                 else:
@@ -369,13 +371,14 @@ def decode_filename(df):
             if not filesplit.Ext[i] is None:
                 ext = filesplit.Ext[i].split('.')
                 df_dict['Ext'][i] = ext[0]
-                df_dict['Type'][i] = ext[1]
+                if len(ext) > 1:
+                    df_dict['Type'][i] = ext[1]
 
 
     except Exception as e:
         kpilog.error("Unable to decode file - {}".format(str(e)))
 
-    decode_df = pd.DataFrame(df_dict)
+    decode_df = pd.DataFrame(df_dict) 
     decode_df.reset_index(inplace=True)
     kpilog.info("Downloadfile decoded records: {}".format(len(decode_df)))
 
