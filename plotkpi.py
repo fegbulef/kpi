@@ -34,9 +34,12 @@ except ImportError:
     sys.exit(-1)
 
 
-# Colour map
+# Colour maps
 PRODCOLORS = {"CMA":'forestgreen', "CMS":'darkorange', "CMM":'cornflowerblue'}
-STACKCOLORS = ['royalblue','darkorange','darkgray','gold','cornflowerblue','darkseagreen','navy','firebrick','mediumpurple']
+
+STACKCOLORS = ['royalblue','darkorange','darkgray','gold','cornflowerblue',
+               'darkseagreen','navy','firebrick','mediumpurple','lightcoral',
+               'slategray','chocolate','tan','khaki','lightskyblue']
 
 
 kpilog = util.get_logger(config.autokpi["logname"])
